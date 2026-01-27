@@ -928,8 +928,9 @@ TEST_F(ScanInteTest, TestScanAppendWithInvalidOptions) {
             .WithStreamingMode(true);
         ASSERT_OK_AND_ASSIGN(auto scan_context, context_builder.Finish());
         ASSERT_OK_AND_ASSIGN(auto table_scan, TableScan::Create(std::move(scan_context)));
-        ASSERT_NOK_WITH_MSG(table_scan->CreatePlan(),
-                            "scan.snapshot-id must be set when startup mode is FROM_SNAPSHOT");
+        ASSERT_NOK_WITH_MSG(
+            table_scan->CreatePlan(),
+            "scan.snapshot-id or scan.tag-name must be set when startup mode is FROM_SNAPSHOT");
     }
     {
         ScanContextBuilder context_builder(table_path);
