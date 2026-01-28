@@ -147,6 +147,7 @@ TEST(CoreOptionsTest, TestFromMap) {
         {Options::PARTITION_GENERATE_LEGACY_NAME, "false"},
         {Options::GLOBAL_INDEX_ENABLED, "false"},
         {Options::GLOBAL_INDEX_EXTERNAL_PATH, "FILE:///tmp/global_index/"},
+        {Options::SCAN_TAG_NAME, "test-tag"},
     };
 
     ASSERT_OK_AND_ASSIGN(CoreOptions core_options, CoreOptions::FromMap(options));
@@ -217,6 +218,7 @@ TEST(CoreOptionsTest, TestFromMap) {
     ASSERT_FALSE(core_options.GlobalIndexEnabled());
     ASSERT_TRUE(core_options.GetGlobalIndexExternalPath());
     ASSERT_EQ(core_options.GetGlobalIndexExternalPath().value(), "FILE:///tmp/global_index/");
+    ASSERT_EQ(core_options.GetScanTagName().value(), "test-tag");
 }
 
 TEST(CoreOptionsTest, TestInvalidCase) {
