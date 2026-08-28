@@ -41,6 +41,8 @@
 #include "paimon/file_store_commit.h"
 #include "paimon/file_store_write.h"
 #include "paimon/format/file_format_factory.h"
+#include "paimon/predicate/literal.h"
+#include "paimon/predicate/predicate_builder.h"
 #include "paimon/read_context.h"
 #include "paimon/result.h"
 #include "paimon/table/source/table_read.h"
@@ -821,6 +823,241 @@ TEST_F(AppendCompactionInteTest, TestAppendTableCompactionWithIOException) {
     }
 
     ASSERT_TRUE(compaction_run_complete);
+}
+
+// Rewriting through the dictionary passthrough has to produce the same table as rewriting through
+// materialized values, whatever encoding each input file happens to carry. The interesting part is
+// the chain the unit tests cannot reach on their own: CompactRewrite hands the batch to the file
+// index writer and to the format writer, and both of them recover each column's encoding from the
+// batch layout after the type has been dropped by the C data interface.
+//
+// Parameterised over the two formats that have an encoding to forward or to suppress: Parquet
+// turns the passthrough on, ORC forces it off because its writer cannot take a dictionary-encoded
+// batch. ORC lazy decoding is on throughout, which makes the ORC reader hand over
+// `dictionary(int64, large_utf8)` - a shape no layout can resolve, so it exercises the
+// decode-at-the-source path rather than the passthrough.
+TEST_P(AppendCompactionInteTest, TestAppendTableCompactionDictionaryPassthrough) {
+    auto file_format = GetParam();
+    if (file_format != "parquet" && file_format != "orc") {
+        GTEST_SKIP() << file_format << " has no dictionary encoding to forward or to suppress";
+    }
+    auto dir = UniqueTestDirectory::Create();
+    ASSERT_TRUE(dir);
+
+    // `s` and `b` are low-cardinality and come back encoded; `id` is INT32, which the gate excludes
+    // by physical type, so the rewrite carries both kinds of column at once. `u` holds a distinct
+    // value per row, the shape passthrough saves least on. The cardinality-driven half of the gate
+    // - a column that starts dictionary-encoded and falls back to plain partway through a file -
+    // needs more rows than a readable fixture holds and is covered by
+    // ParquetFileBatchReaderTest.TestDictionaryPassthroughSkipsFallbackToPlain instead.
+    arrow::FieldVector fields = {
+        arrow::field("id", arrow::int32()), arrow::field("s", arrow::utf8()),
+        arrow::field("b", arrow::binary()), arrow::field("u", arrow::utf8())};
+    auto schema = arrow::schema(fields);
+
+    std::map<std::string, std::string> options = {
+        {Options::FILE_FORMAT, file_format},
+        {Options::BUCKET, "1"},
+        {Options::BUCKET_KEY, "id"},
+        {Options::FILE_SYSTEM, "local"},
+        {"orc.read.enable-lazy-decoding", "true"},
+        // Above the distinct/total ratio of every column here, so ORC dictionary-encodes rather
+        // than leaving it to its own heuristic and making the assertion below data-dependent.
+        {"orc.dictionary-key-size-threshold", "0.9"},
+        {"file-index.bitmap.columns", "s"},
+        {Options::FILE_INDEX_IN_MANIFEST_THRESHOLD, "1MB"},
+    };
+    ASSERT_OK_AND_ASSIGN(auto helper, TestHelper::Create(dir->Str(), schema, /*partition_keys=*/{},
+                                                         /*primary_keys=*/{}, options,
+                                                         /*is_streaming_mode=*/true));
+
+    // Each commit becomes its own input file with its own dictionary, so the rewrite has to carry
+    // several different dictionaries into one output column chunk.
+    const std::vector<std::string> batches = {
+        R"([[1, "aa", "p", "distinct_value_1"],
+            [2, "bb", "q", "distinct_value_2"],
+            [3, null, "p", "distinct_value_3"],
+            [4, "aa", "q", "distinct_value_4"]])",
+        R"([[5, "cc", "r", "distinct_value_5"],
+            [6, "dd", "r", "distinct_value_6"],
+            [7, "cc", "s", "distinct_value_7"],
+            [8, "dd", "s", "distinct_value_8"]])",
+        R"([[9, "aa", "p", "distinct_value_9"],
+            [10, "ee", "t", "distinct_value_10"]])",
+    };
+    int64_t commit_identifier = 0;
+    for (const std::string& data : batches) {
+        ASSERT_OK_AND_ASSIGN(std::unique_ptr<RecordBatch> batch,
+                             TestHelper::MakeRecordBatch(arrow::struct_(fields), data,
+                                                         /*partition_map=*/{}, /*bucket=*/0, {}));
+        ASSERT_OK(helper->WriteAndCommit(std::move(batch), commit_identifier++,
+                                         /*expected_commit_messages=*/std::nullopt));
+    }
+
+    {
+        // What the rewrite is about to read, checked on an input file with the same options the
+        // rewrite uses. Asserting the read type here is what makes the two directions facts of
+        // this test rather than assumptions: on Parquet `s` and `b` arrive as DictionaryArray and
+        // `id` does not, because the gate only considers BYTE_ARRAY leaves; on ORC `s` arrives as
+        // `dictionary(int64, large_utf8)`, the shape no ArrowArray layout can resolve and the one
+        // FlattenUnresolvableDictionaries has to decode before the batch reaches the writer.
+        ASSERT_OK_AND_ASSIGN(std::vector<std::shared_ptr<Split>> input_splits,
+                             helper->NewScan(StartupMode::LatestFull(),
+                                             /*snapshot_id=*/std::nullopt));
+        ASSERT_EQ(1, input_splits.size());
+        auto input_split = std::dynamic_pointer_cast<DataSplitImpl>(input_splits[0]);
+        ASSERT_TRUE(input_split);
+        ASSERT_EQ(3, input_split->DataFiles().size());
+        std::string input_path =
+            PathUtil::JoinPath(input_split->BucketPath(), input_split->DataFiles()[0]->file_name);
+        ASSERT_OK_AND_ASSIGN(auto unique_input_stream, dir->GetFileSystem()->Open(input_path));
+        std::shared_ptr<InputStream> input_stream(std::move(unique_input_stream));
+
+        std::map<std::string, std::string> passthrough_options = options;
+        passthrough_options["parquet.read.enable-dictionary-passthrough"] = "true";
+        ASSERT_OK_AND_ASSIGN(auto input_file_format,
+                             FileFormatFactory::Get(file_format, passthrough_options));
+        ASSERT_OK_AND_ASSIGN(auto input_reader_builder, input_file_format->CreateReaderBuilder(10));
+        ASSERT_OK_AND_ASSIGN(auto input_reader, input_reader_builder->Build(input_stream));
+        ASSERT_OK_AND_ASSIGN(auto c_input_schema, input_reader->GetFileSchema());
+        ASSERT_OK(input_reader->SetReadSchema(c_input_schema.get(), /*predicate=*/nullptr,
+                                              /*selection_bitmap=*/std::nullopt));
+        // Read one batch directly rather than through ReadResultCollector, which decodes
+        // dictionaries on the way out and would hide the very thing being asserted.
+        ASSERT_OK_AND_ASSIGN(BatchReader::ReadBatch input_batch, input_reader->NextBatch());
+        ASSERT_FALSE(BatchReader::IsEofBatch(input_batch));
+        auto& [input_c_array, input_c_schema] = input_batch;
+        std::shared_ptr<arrow::Array> input_array =
+            arrow::ImportArray(input_c_array.get(), input_c_schema.get()).ValueOrDie();
+        std::shared_ptr<arrow::DataType> input_type = input_array->type();
+        ASSERT_EQ(arrow::Type::INT32, input_type->field(0)->type()->id()) << "column id";
+        ASSERT_EQ(arrow::Type::DICTIONARY, input_type->field(1)->type()->id()) << "column s";
+        if (file_format == "parquet") {
+            ASSERT_EQ(arrow::Type::DICTIONARY, input_type->field(2)->type()->id()) << "column b";
+            ASSERT_TRUE(input_type->field(1)->type()->Equals(
+                *arrow::dictionary(arrow::int32(), arrow::utf8())))
+                << input_type->field(1)->type()->ToString();
+        } else {
+            // The ORC adapter only dictionary-encodes STRING, so `b` stays materialized, and it
+            // widens the values: `dictionary(int64, large_utf8)` is exactly the shape whose index
+            // and offset widths an ArrowArray layout cannot report.
+            ASSERT_TRUE(input_type->field(1)->type()->Equals(
+                *arrow::dictionary(arrow::int64(), arrow::large_utf8())))
+                << input_type->field(1)->type()->ToString();
+        }
+    }
+
+    ASSERT_OK(helper->write_->Compact(/*partition=*/{}, /*bucket=*/0, /*full_compaction=*/true));
+    ASSERT_OK_AND_ASSIGN(
+        std::vector<std::shared_ptr<CommitMessage>> commit_messages,
+        helper->write_->PrepareCommit(/*wait_compaction=*/true, commit_identifier));
+    ASSERT_FALSE(commit_messages.empty());
+    ASSERT_OK(helper->commit_->Commit(commit_messages, commit_identifier));
+    ASSERT_OK_AND_ASSIGN(std::optional<Snapshot> snapshot, helper->LatestSnapshot());
+    ASSERT_TRUE(snapshot);
+    ASSERT_EQ(Snapshot::CommitKind::Compact(), snapshot.value().GetCommitKind());
+
+    ASSERT_OK_AND_ASSIGN(std::vector<std::shared_ptr<Split>> data_splits,
+                         helper->NewScan(StartupMode::LatestFull(), /*snapshot_id=*/std::nullopt));
+    ASSERT_EQ(1, data_splits.size());
+    auto data_split = std::dynamic_pointer_cast<DataSplitImpl>(data_splits[0]);
+    ASSERT_TRUE(data_split);
+    ASSERT_EQ(1, data_split->DataFiles().size());
+
+    arrow::FieldVector fields_with_row_kind = fields;
+    fields_with_row_kind.insert(fields_with_row_kind.begin(),
+                                arrow::field("_VALUE_KIND", arrow::int8()));
+    auto read_type = arrow::struct_(fields_with_row_kind);
+    ASSERT_OK_AND_ASSIGN(bool success, helper->ReadAndCheckResult(read_type, data_splits, R"([
+        [0, 1, "aa", "p", "distinct_value_1"],
+        [0, 2, "bb", "q", "distinct_value_2"],
+        [0, 3, null, "p", "distinct_value_3"],
+        [0, 4, "aa", "q", "distinct_value_4"],
+        [0, 5, "cc", "r", "distinct_value_5"],
+        [0, 6, "dd", "r", "distinct_value_6"],
+        [0, 7, "cc", "s", "distinct_value_7"],
+        [0, 8, "dd", "s", "distinct_value_8"],
+        [0, 9, "aa", "p", "distinct_value_9"],
+        [0, 10, "ee", "t", "distinct_value_10"]
+    ])"));
+    ASSERT_TRUE(success);
+
+    // The bitmap index on `s` is built from the rewritten batch, which reaches the index writer
+    // still encoded when the passthrough is on. Reading through the index is what proves it was
+    // decoded against the right values rather than against its indices.
+    std::string indexed_value = "cc";
+    auto predicate = PredicateBuilder::Equal(
+        /*field_index=*/1, /*field_name=*/"s", FieldType::STRING,
+        Literal(FieldType::STRING, indexed_value.data(), indexed_value.size()));
+    ReadContextBuilder read_context_builder(PathUtil::JoinPath(dir->Str(), "foo.db/bar"));
+    read_context_builder.SetOptions(options).SetPredicate(predicate);
+    ASSERT_OK_AND_ASSIGN(auto read_context, read_context_builder.Finish());
+    ASSERT_OK_AND_ASSIGN(auto table_read, TableRead::Create(std::move(read_context)));
+    ASSERT_OK_AND_ASSIGN(auto batch_reader, table_read->CreateReader(data_splits));
+    ASSERT_OK_AND_ASSIGN(auto filtered, ReadResultCollector::CollectResult(batch_reader.get()));
+    auto expected = std::make_shared<arrow::ChunkedArray>(
+        arrow::ipc::internal::json::ArrayFromJSON(read_type, R"([
+        [0, 5, "cc", "r", "distinct_value_5"],
+        [0, 7, "cc", "s", "distinct_value_7"]
+    ])")
+            .ValueOrDie());
+    ASSERT_TRUE(expected->Equals(filtered)) << "actual=" << filtered->ToString();
+}
+
+// The same rewrite with the passthrough explicitly disabled has to land on the same table, so the
+// kill switch is a performance knob and never a correctness one.
+TEST_F(AppendCompactionInteTest, TestAppendTableCompactionDictionaryPassthroughDisabled) {
+    auto dir = UniqueTestDirectory::Create();
+    ASSERT_TRUE(dir);
+    arrow::FieldVector fields = {arrow::field("id", arrow::int32()),
+                                 arrow::field("s", arrow::utf8())};
+    auto schema = arrow::schema(fields);
+    std::map<std::string, std::string> options = {
+        {Options::FILE_FORMAT, "parquet"},
+        {Options::BUCKET, "1"},
+        {Options::BUCKET_KEY, "id"},
+        {Options::FILE_SYSTEM, "local"},
+        {"parquet.read.enable-dictionary-passthrough", "false"},
+    };
+    ASSERT_OK_AND_ASSIGN(auto helper, TestHelper::Create(dir->Str(), schema, /*partition_keys=*/{},
+                                                         /*primary_keys=*/{}, options,
+                                                         /*is_streaming_mode=*/true));
+
+    // Three files, which is what full compaction needs before it rewrites anything, and three
+    // different dictionaries for the writer to reconcile.
+    const std::vector<std::string> batches = {
+        R"([[1, "aa"], [2, "bb"]])", R"([[3, "cc"], [4, "aa"]])", R"([[5, "dd"], [6, "cc"]])"};
+    int64_t commit_identifier = 0;
+    for (const std::string& data : batches) {
+        ASSERT_OK_AND_ASSIGN(std::unique_ptr<RecordBatch> batch,
+                             TestHelper::MakeRecordBatch(arrow::struct_(fields), data,
+                                                         /*partition_map=*/{}, /*bucket=*/0, {}));
+        ASSERT_OK(helper->WriteAndCommit(std::move(batch), commit_identifier++,
+                                         /*expected_commit_messages=*/std::nullopt));
+    }
+
+    ASSERT_OK(helper->write_->Compact(/*partition=*/{}, /*bucket=*/0, /*full_compaction=*/true));
+    ASSERT_OK_AND_ASSIGN(
+        std::vector<std::shared_ptr<CommitMessage>> commit_messages,
+        helper->write_->PrepareCommit(/*wait_compaction=*/true, commit_identifier));
+    ASSERT_FALSE(commit_messages.empty());
+    ASSERT_OK(helper->commit_->Commit(commit_messages, commit_identifier));
+
+    ASSERT_OK_AND_ASSIGN(std::vector<std::shared_ptr<Split>> data_splits,
+                         helper->NewScan(StartupMode::LatestFull(), /*snapshot_id=*/std::nullopt));
+    arrow::FieldVector fields_with_row_kind = fields;
+    fields_with_row_kind.insert(fields_with_row_kind.begin(),
+                                arrow::field("_VALUE_KIND", arrow::int8()));
+    ASSERT_OK_AND_ASSIGN(bool success, helper->ReadAndCheckResult(
+                                           arrow::struct_(fields_with_row_kind), data_splits, R"([
+        [0, 1, "aa"],
+        [0, 2, "bb"],
+        [0, 3, "cc"],
+        [0, 4, "aa"],
+        [0, 5, "dd"],
+        [0, 6, "cc"]
+    ])"));
+    ASSERT_TRUE(success);
 }
 
 }  // namespace paimon::test

@@ -23,14 +23,19 @@
 #include <string_view>
 #include <utility>
 
+#include "arrow/array/array_dict.h"
 #include "arrow/c/bridge.h"
+#include "arrow/compute/api.h"
 #include "arrow/memory_pool.h"
 #include "arrow/record_batch.h"
+#include "arrow/type.h"
 #include "arrow/util/base64.h"
 #include "arrow/util/key_value_metadata.h"
 #include "paimon/common/metrics/metrics_impl.h"
 #include "paimon/common/utils/arrow/arrow_output_stream_adapter.h"
+#include "paimon/common/utils/arrow/arrow_utils.h"
 #include "paimon/common/utils/arrow/status_utils.h"
+#include "paimon/common/utils/checked_cast.h"
 #include "paimon/format/parquet/parquet_format_defs.h"
 #include "parquet/arrow/writer.h"
 #include "parquet/properties.h"
@@ -64,14 +69,61 @@ Result<std::unique_ptr<ParquetFormatWriter>> ParquetFormatWriter::Create(
 }
 
 Status ParquetFormatWriter::AddBatch(ArrowArray* batch) {
+    PAIMON_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Schema> batch_schema, ResolveBatchSchema(batch));
     PAIMON_ASSIGN_OR_RAISE_FROM_ARROW(std::shared_ptr<::arrow::RecordBatch> record_batch,
-                                      arrow::ImportRecordBatch(batch, schema_));
+                                      arrow::ImportRecordBatch(batch, batch_schema));
+    PAIMON_ASSIGN_OR_RAISE(record_batch, FlattenUnwritableDictionaries(record_batch));
     if (static_cast<uint64_t>(pool_->bytes_allocated()) > max_memory_use_) {
         PAIMON_RETURN_NOT_OK_FROM_ARROW(writer_->NewBufferedRowGroup());
     }
     PAIMON_RETURN_NOT_OK_FROM_ARROW(writer_->WriteRecordBatch(*record_batch));
     total_records_written_ += (*record_batch).num_rows();
     return Status::OK();
+}
+
+Result<std::shared_ptr<arrow::Schema>> ParquetFormatWriter::ResolveBatchSchema(
+    const ::ArrowArray* batch) {
+    PAIMON_ASSIGN_OR_RAISE(
+        std::shared_ptr<arrow::DataType> batch_type,
+        ArrowUtils::ResolveParquetDictionaryStructType(logical_struct_type_, batch));
+    if (batch_type == logical_struct_type_) {
+        return schema_;
+    }
+    if (dictionary_batch_type_ == nullptr || !dictionary_batch_type_->Equals(*batch_type)) {
+        dictionary_batch_type_ = batch_type;
+        dictionary_batch_schema_ = arrow::schema(batch_type->fields(), schema_->metadata());
+    }
+    return dictionary_batch_schema_;
+}
+
+Result<std::shared_ptr<arrow::RecordBatch>> ParquetFormatWriter::FlattenUnwritableDictionaries(
+    const std::shared_ptr<arrow::RecordBatch>& record_batch) const {
+    arrow::ArrayVector columns;
+    arrow::FieldVector fields;
+    arrow::compute::ExecContext exec_context(pool_.get());
+    for (int32_t i = 0; i < record_batch->num_columns(); ++i) {
+        const std::shared_ptr<arrow::Array>& column = record_batch->column(i);
+        if (column->type_id() != arrow::Type::DICTIONARY ||
+            checked_cast<const arrow::DictionaryArray&>(*column).dictionary()->null_count() == 0) {
+            continue;
+        }
+        if (columns.empty()) {
+            columns = record_batch->columns();
+            fields = record_batch->schema()->fields();
+        }
+        const auto& dictionary_type = checked_cast<const arrow::DictionaryType&>(*column->type());
+        PAIMON_ASSIGN_OR_RAISE_FROM_ARROW(
+            arrow::Datum flattened,
+            arrow::compute::Cast(column, dictionary_type.value_type(),
+                                 arrow::compute::CastOptions::Safe(), &exec_context));
+        columns[i] = flattened.make_array();
+        fields[i] = fields[i]->WithType(dictionary_type.value_type());
+    }
+    if (columns.empty()) {
+        return record_batch;
+    }
+    return arrow::RecordBatch::Make(arrow::schema(fields, record_batch->schema()->metadata()),
+                                    record_batch->num_rows(), std::move(columns));
 }
 
 Status ParquetFormatWriter::Flush() {
@@ -119,6 +171,7 @@ ParquetFormatWriter::ParquetFormatWriter(std::unique_ptr<::parquet::arrow::FileW
       out_(out),
       writer_(std::move(writer)),
       schema_(schema),
+      logical_struct_type_(arrow::struct_(schema->fields())),
       metrics_(std::make_shared<MetricsImpl>()),
       max_memory_use_(max_memory_use) {}
 

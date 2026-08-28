@@ -88,6 +88,40 @@ After compaction, if the last output file is still smaller than
 ``compaction.file-size``, it is placed back into the compaction queue for future
 merging.
 
+Dictionary Passthrough
+~~~~~~~~~~~~~~~~~~~~~~
+An append-only compaction rewrite copies rows into the new file without
+inspecting any value, so a Parquet column that an input file already stores
+dictionary-encoded is forwarded to the writer still encoded instead of being
+expanded to one copy of the value per row and re-encoded. This saves the reader
+materializing the values and the writer hashing them again; how much that is
+worth depends on the column, and low-cardinality ``STRING``/``BINARY`` columns
+benefit most. Primary-key compaction merges rows and is not covered.
+
+This applies automatically. Eligibility is decided per input file: a non-nested
+``STRING``/``BINARY`` column is forwarded when its data pages are
+dictionary-encoded throughout every row group of *that* file, so one input file
+can be read encoded while the next one is read as ordinary values, and the
+writer takes both. A high-cardinality column that started dictionary-encoded and
+fell back to plain encoding therefore does not qualify, even though it still
+carries a dictionary page. Passthrough is also skipped when the table writes a
+format other than Parquet, when ``parquet.enable-dictionary`` is ``false``
+because the writer would only expand the values again, or when variant/map
+shredding is configured because those writers reshape each batch against a fixed
+physical schema.
+
+If a file index is configured on a forwarded column, that column alone is
+materialized so the index still sees its values; the other columns stay encoded.
+
+Passthrough changes what the rewrite costs, not what it produces, with one
+exception worth knowing: a Parquet column chunk can only carry one dictionary,
+so when the input files supply different dictionaries the output column keeps
+the first and falls back to plain encoding for the rest of the row group. The
+rewritten data is unchanged either way, but the output file may be larger than a
+rewrite that rebuilt a single dictionary from materialized values. Set
+``parquet.read.enable-dictionary-passthrough`` to ``false`` on the table to turn
+the optimization off and always rebuild.
+
 Append-Only Table Compaction Options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

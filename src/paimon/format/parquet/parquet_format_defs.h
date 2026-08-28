@@ -102,12 +102,24 @@ static inline const char PARQUET_READ_ENABLE_PAGE_INDEX_FILTER[] =
 // Default is true.
 static inline const char PARQUET_READ_ENABLE_PRE_BUFFER[] = "parquet.read.enable-pre-buffer";
 
+// Emit dictionary-encoded STRING/BINARY columns as Arrow DictionaryArray instead of one copy of
+// the value per row. Restricted to non-nested leaf columns whose every data page is already
+// dictionary-encoded, so the reader only ever hands on a dictionary the file itself has.
+//
+// Off by default because it only pays off when the consumer forwards the batch without inspecting
+// values, which is why the append compaction rewrite is the one caller that opts in. Value
+// accessors have to unwrap DictionaryArray to read such a column; `ColumnarUtils::GetView` does,
+// but that is not true of every accessor, so a new consumer has to be checked before enabling it.
+static inline const char PARQUET_READ_ENABLE_DICTIONARY_PASSTHROUGH[] =
+    "parquet.read.enable-dictionary-passthrough";
+
 static constexpr uint32_t DEFAULT_PARQUET_READ_CACHE_OPTION_PREFETCH_LIMIT = 0;
 // Default value of hole size limit, inherited from Arrow
 static constexpr uint32_t DEFAULT_PARQUET_READ_CACHE_OPTION_HOLE_SIZE_LIMIT = 8 * 1024;
 static constexpr uint32_t DEFAULT_PARQUET_READ_CACHE_OPTION_RANGE_SIZE_LIMIT = 32 * 1024 * 1024;
 static constexpr uint32_t DEFAULT_PARQUET_READ_PREDICATE_NODE_COUNT_LIMIT = 512;
 static constexpr bool DEFAULT_PARQUET_READ_ENABLE_PAGE_INDEX_FILTER = true;
+static constexpr bool DEFAULT_PARQUET_READ_ENABLE_DICTIONARY_PASSTHROUGH = false;
 static constexpr char DEFAULT_PARQUET_READ_BITMAP_STRATEGY[] = "coalesce";
 static constexpr uint32_t DEFAULT_PARQUET_READ_ROW_RANGES_COALESCE_HOLE_SIZE_LIMIT = 32;
 
