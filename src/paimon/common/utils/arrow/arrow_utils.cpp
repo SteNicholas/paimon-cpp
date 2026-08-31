@@ -44,7 +44,7 @@ namespace {
 // Whether `type` is a dictionary this can carry across the C data interface unchanged. The index
 // width is part of the test because nothing in a layout reveals it; see
 // ArrowUtils::IsDictionaryLayoutRecoverableValueType().
-bool IsResolvableDictionary(const arrow::DataType& type) {
+bool IsDictionaryLayoutRecoverable(const arrow::DataType& type) {
     if (type.id() != arrow::Type::DICTIONARY) {
         return false;
     }
@@ -558,7 +558,7 @@ Result<arrow::Compression::type> ArrowUtils::GetCompressionType(const std::strin
 // `int32` indices over `int32` offsets would silently reinterpret both buffers instead of failing.
 //
 // This narrows what may be carried; it cannot verify what was. See
-// ResolveParquetDictionaryStructType() for where the index width becomes a caller contract.
+// ResolveDictionaryStructTypeFromLayout() for where the index width becomes a caller contract.
 bool ArrowUtils::IsDictionaryLayoutRecoverableValueType(const arrow::DataType& type) {
     return arrow::is_binary_like(type.id());
 }
@@ -574,7 +574,7 @@ bool ArrowUtils::IsDictionaryLayoutRecoverableValueType(const arrow::DataType& t
 // batch whose dictionaries the schema does not declare, and it honours the contract by running
 // FlattenUnresolvableDictionaries() first. Closing the hole instead of narrowing it needs the real
 // `ArrowSchema` to reach the writer, which `FormatWriter::AddBatch(ArrowArray*)` drops.
-Result<std::shared_ptr<arrow::DataType>> ArrowUtils::ResolveParquetDictionaryStructType(
+Result<std::shared_ptr<arrow::DataType>> ArrowUtils::ResolveDictionaryStructTypeFromLayout(
     const std::shared_ptr<arrow::DataType>& logical_type, const ::ArrowArray* batch) {
     if (batch == nullptr || logical_type->id() != arrow::Type::STRUCT ||
         batch->n_children != logical_type->num_fields()) {
@@ -619,7 +619,8 @@ Result<std::shared_ptr<arrow::DataType>> ArrowUtils::ResolveParquetDictionaryStr
 
 Result<std::shared_ptr<arrow::StructArray>> ArrowUtils::FlattenUnresolvableDictionaries(
     const std::shared_ptr<arrow::StructArray>& batch,
-    const std::shared_ptr<arrow::DataType>& logical_type, arrow::MemoryPool* pool) {
+    const std::shared_ptr<arrow::DataType>& logical_type, arrow::MemoryPool* pool,
+    bool preserve_layout_recoverable_dictionaries) {
     const std::shared_ptr<arrow::DataType>& batch_type = batch->type();
     if (logical_type->id() != arrow::Type::STRUCT || !HasDictionary(*batch_type)) {
         return batch;
@@ -629,7 +630,13 @@ Result<std::shared_ptr<arrow::StructArray>> ArrowUtils::FlattenUnresolvableDicti
     arrow::FieldVector fields = batch_type->fields();
     for (int32_t i = 0; i < batch_type->num_fields(); ++i) {
         std::shared_ptr<arrow::Field> field = fields[i];
-        if (IsResolvableDictionary(*field->type()) || !HasDictionary(*field->type())) {
+        if (!HasDictionary(*field->type())) {
+            continue;
+        }
+        // Surviving the export is not enough when the destination imports against the logical
+        // type: an undeclared dictionary child of any shape then fails on the buffer count.
+        if (preserve_layout_recoverable_dictionaries &&
+            IsDictionaryLayoutRecoverable(*field->type())) {
             continue;
         }
         std::shared_ptr<arrow::Field> logical_field =

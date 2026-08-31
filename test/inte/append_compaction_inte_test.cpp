@@ -863,8 +863,9 @@ TEST_F(AppendCompactionInteTest, TestAppendTableCompactionWithIOException) {
 // rewrite requires - it never enables the passthrough by itself. Parquet then forwards the
 // encoding; ORC has the option vetoed because its writer cannot take a dictionary-encoded batch.
 // ORC lazy decoding is on throughout, which makes the ORC reader hand over
-// `dictionary(int64, large_utf8)` - a shape no layout can resolve, so it exercises the
-// decode-at-the-source path rather than the passthrough.
+// `dictionary(int64, large_utf8)` regardless, so the ORC parameter covers decoding a shape no
+// layout can resolve. ArrowUtilsTest.TestFlattenUnresolvableDictionaries separately covers a
+// vetoed writer receiving the layout-recoverable dictionary(int32, utf8) shape.
 TEST_P(AppendCompactionInteTest, TestAppendTableCompactionDictionaryPassthrough) {
     auto file_format = GetParam();
     if (file_format != "parquet" && file_format != "orc") {

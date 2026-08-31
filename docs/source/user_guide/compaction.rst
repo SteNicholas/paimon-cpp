@@ -126,6 +126,11 @@ the values again, or when variant/map shredding is configured because those
 writers reshape each batch against a fixed physical schema. Setting the option
 therefore never makes a rewrite fail; at worst it has no effect.
 
+When the option is vetoed, the rewrite also enforces the veto on every input
+batch. A format reader can independently hand over dictionary-encoded columns
+because of its own lazy-decoding setting, so the rewrite decodes those columns
+before handing them to a writer that cannot accept dictionary arrays.
+
 If a file index is configured on a forwarded column, that column alone is
 materialized so the index still sees its values; the other columns stay encoded.
 

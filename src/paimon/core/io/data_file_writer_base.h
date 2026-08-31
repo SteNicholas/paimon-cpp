@@ -133,7 +133,7 @@ class DataFileWriterBase : public SingleFileWriter<Record, std::shared_ptr<DataF
         // logical type does not describe. Import what is actually there and pass it on unchanged;
         // the index writer decodes only the columns it indexes.
         Result<std::shared_ptr<arrow::DataType>> batch_type =
-            ArrowUtils::ResolveParquetDictionaryStructType(logical_type_, batch);
+            ArrowUtils::ResolveDictionaryStructTypeFromLayout(logical_type_, batch);
         if (!batch_type.ok()) {
             // Every other exit from here has already handed `batch` to ImportArray, which consumes
             // it whether it succeeds or not. Keep that contract on the one path that returns

@@ -86,7 +86,7 @@ Result<std::shared_ptr<arrow::Schema>> ParquetFormatWriter::ResolveBatchSchema(
     const ::ArrowArray* batch) const {
     PAIMON_ASSIGN_OR_RAISE(
         std::shared_ptr<arrow::DataType> batch_type,
-        ArrowUtils::ResolveParquetDictionaryStructType(logical_struct_type_, batch));
+        ArrowUtils::ResolveDictionaryStructTypeFromLayout(logical_struct_type_, batch));
     if (batch_type == logical_struct_type_) {
         return schema_;
     }

@@ -927,7 +927,7 @@ TEST(ArrowUtilsTest, TestGetCompressionType) {
     }
 }
 
-TEST(ArrowUtilsTest, TestResolveParquetDictionaryStructType) {
+TEST(ArrowUtilsTest, TestResolveDictionaryStructTypeFromLayout) {
     // The resolution never consumes the exported batch, so it is released here.
     auto resolve = [](const std::shared_ptr<arrow::Array>& array,
                       const std::shared_ptr<arrow::DataType>& logical_type) {
@@ -935,7 +935,7 @@ TEST(ArrowUtilsTest, TestResolveParquetDictionaryStructType) {
         ArrowArrayMarkReleased(&c_array);
         EXPECT_TRUE(arrow::ExportArray(*array, &c_array).ok());
         Result<std::shared_ptr<arrow::DataType>> resolved =
-            ArrowUtils::ResolveParquetDictionaryStructType(logical_type, &c_array);
+            ArrowUtils::ResolveDictionaryStructTypeFromLayout(logical_type, &c_array);
         ArrowArrayRelease(&c_array);
         return resolved;
     };
@@ -1046,24 +1046,24 @@ TEST(ArrowUtilsTest, TestResolveParquetDictionaryStructType) {
 
 TEST(ArrowUtilsTest, TestFlattenUnresolvableDictionaries) {
     auto pool = arrow::default_memory_pool();
-    auto describable_type = arrow::dictionary(arrow::int32(), arrow::utf8());
+    auto layout_recoverable_type = arrow::dictionary(arrow::int32(), arrow::utf8());
     // What the ORC reader hands over for a dictionary-encoded string column under lazy decoding.
-    auto undescribable_type = arrow::dictionary(arrow::int64(), arrow::large_utf8());
+    auto layout_unrecoverable_type = arrow::dictionary(arrow::int64(), arrow::large_utf8());
     auto logical_type =
         arrow::struct_({arrow::field("s", arrow::utf8()), arrow::field("o", arrow::utf8()),
                         arrow::field("i", arrow::int32())});
 
     std::shared_ptr<arrow::Array> ints =
         arrow::ipc::internal::json::ArrayFromJSON(arrow::int32(), "[1, 2, 3]").ValueOrDie();
-    std::shared_ptr<arrow::Array> describable =
+    std::shared_ptr<arrow::Array> layout_recoverable =
         arrow::DictionaryArray::FromArrays(
-            describable_type,
+            layout_recoverable_type,
             arrow::ipc::internal::json::ArrayFromJSON(arrow::int32(), "[0, 1, 0]").ValueOrDie(),
             arrow::ipc::internal::json::ArrayFromJSON(arrow::utf8(), R"(["a", "b"])").ValueOrDie())
             .ValueOrDie();
-    std::shared_ptr<arrow::Array> undescribable =
+    std::shared_ptr<arrow::Array> layout_unrecoverable =
         arrow::DictionaryArray::FromArrays(
-            undescribable_type,
+            layout_unrecoverable_type,
             arrow::ipc::internal::json::ArrayFromJSON(arrow::int64(), "[0, null, 1]").ValueOrDie(),
             arrow::ipc::internal::json::ArrayFromJSON(arrow::large_utf8(), R"(["c", "d"])")
                 .ValueOrDie())
@@ -1073,12 +1073,13 @@ TEST(ArrowUtilsTest, TestFlattenUnresolvableDictionaries) {
         // Only the column that would not survive the export is decoded; the one that would keeps
         // its encoding, which is what makes this selective rather than an all-or-nothing flatten.
         auto batch = checked_pointer_cast<arrow::StructArray>(
-            arrow::StructArray::Make({describable, undescribable, ints},
+            arrow::StructArray::Make({layout_recoverable, layout_unrecoverable, ints},
                                      std::vector<std::string>{"s", "o", "i"})
                 .ValueOrDie());
-        ASSERT_OK_AND_ASSIGN(
-            std::shared_ptr<arrow::StructArray> flattened,
-            ArrowUtils::FlattenUnresolvableDictionaries(batch, logical_type, pool));
+        ASSERT_OK_AND_ASSIGN(std::shared_ptr<arrow::StructArray> flattened,
+                             ArrowUtils::FlattenUnresolvableDictionaries(
+                                 batch, logical_type, pool,
+                                 /*preserve_layout_recoverable_dictionaries=*/true));
         ASSERT_EQ(arrow::Type::DICTIONARY, flattened->field(0)->type()->id());
         ASSERT_TRUE(flattened->field(1)->type()->Equals(*arrow::utf8()));
         ASSERT_EQ(arrow::Type::INT32, flattened->field(2)->type()->id());
@@ -1088,31 +1089,34 @@ TEST(ArrowUtilsTest, TestFlattenUnresolvableDictionaries) {
                 .ValueOrDie();
         ASSERT_TRUE(flattened->field(1)->Equals(*expected))
             << "actual=" << flattened->field(1)->ToString();
-        ASSERT_TRUE(flattened->field(0)->Equals(*describable));
+        ASSERT_TRUE(flattened->field(0)->Equals(*layout_recoverable));
     }
     {
-        // A dictionary below the top level is undescribable too, so the whole column is decoded.
+        // A dictionary below the top level is layout-unrecoverable too, so the whole column is
+        // decoded.
         auto nested =
-            arrow::StructArray::Make({undescribable}, std::vector<std::string>{"o"}).ValueOrDie();
+            arrow::StructArray::Make({layout_unrecoverable}, std::vector<std::string>{"o"})
+                .ValueOrDie();
         auto batch = checked_pointer_cast<arrow::StructArray>(
             arrow::StructArray::Make({nested, ints}, std::vector<std::string>{"n", "i"})
                 .ValueOrDie());
         auto nested_logical_type =
             arrow::struct_({arrow::field("n", arrow::struct_({arrow::field("o", arrow::utf8())})),
                             arrow::field("i", arrow::int32())});
-        ASSERT_OK_AND_ASSIGN(
-            std::shared_ptr<arrow::StructArray> flattened,
-            ArrowUtils::FlattenUnresolvableDictionaries(batch, nested_logical_type, pool));
+        ASSERT_OK_AND_ASSIGN(std::shared_ptr<arrow::StructArray> flattened,
+                             ArrowUtils::FlattenUnresolvableDictionaries(
+                                 batch, nested_logical_type, pool,
+                                 /*preserve_layout_recoverable_dictionaries=*/true));
         ASSERT_TRUE(flattened->field(0)->type()->Equals(
             *arrow::struct_({arrow::field("o", arrow::utf8())})))
             << flattened->field(0)->type()->ToString();
     }
     {
         // The case the value type alone cannot rule out: `utf8` values behind `int64` indices.
-        // ResolveParquetDictionaryStructType() would accept the value type and then read the
-        // indices as `int32`, so the index width has to be caught here or not at all. This is the
-        // single reason CompactRewrite has to run this before exporting, rather than relying on
-        // the writer's own rejection.
+        // ResolveDictionaryStructTypeFromLayout() would accept the value type and then read the
+        // indices as `int32`, so the index width has to be caught here or not at all - one of the
+        // two reasons CompactRewrite runs this before exporting rather than relying on the
+        // writer's own rejection. A destination that resolves nothing is the other, below.
         std::shared_ptr<arrow::Array> wide_indices =
             arrow::DictionaryArray::FromArrays(
                 arrow::dictionary(arrow::int64(), arrow::utf8()),
@@ -1121,12 +1125,13 @@ TEST(ArrowUtilsTest, TestFlattenUnresolvableDictionaries) {
                     .ValueOrDie())
                 .ValueOrDie();
         auto batch = checked_pointer_cast<arrow::StructArray>(
-            arrow::StructArray::Make({describable, wide_indices, ints},
+            arrow::StructArray::Make({layout_recoverable, wide_indices, ints},
                                      std::vector<std::string>{"s", "o", "i"})
                 .ValueOrDie());
-        ASSERT_OK_AND_ASSIGN(
-            std::shared_ptr<arrow::StructArray> flattened,
-            ArrowUtils::FlattenUnresolvableDictionaries(batch, logical_type, pool));
+        ASSERT_OK_AND_ASSIGN(std::shared_ptr<arrow::StructArray> flattened,
+                             ArrowUtils::FlattenUnresolvableDictionaries(
+                                 batch, logical_type, pool,
+                                 /*preserve_layout_recoverable_dictionaries=*/true));
         ASSERT_TRUE(flattened->field(1)->type()->Equals(*arrow::utf8()))
             << flattened->field(1)->type()->ToString();
         std::shared_ptr<arrow::Array> expected =
@@ -1141,30 +1146,72 @@ TEST(ArrowUtilsTest, TestFlattenUnresolvableDictionaries) {
         // Nothing to do: the very same array comes back, so a rewrite that never sees a dictionary
         // pays nothing for this.
         auto batch = checked_pointer_cast<arrow::StructArray>(
-            arrow::StructArray::Make({describable, describable, ints},
+            arrow::StructArray::Make({layout_recoverable, layout_recoverable, ints},
                                      std::vector<std::string>{"s", "o", "i"})
                 .ValueOrDie());
-        ASSERT_OK_AND_ASSIGN(
-            std::shared_ptr<arrow::StructArray> flattened,
-            ArrowUtils::FlattenUnresolvableDictionaries(batch, logical_type, pool));
+        ASSERT_OK_AND_ASSIGN(std::shared_ptr<arrow::StructArray> flattened,
+                             ArrowUtils::FlattenUnresolvableDictionaries(
+                                 batch, logical_type, pool,
+                                 /*preserve_layout_recoverable_dictionaries=*/true));
         ASSERT_EQ(batch, flattened);
     }
     {
         // A sliced batch keeps its offset: only the child data is swapped underneath it, so the
         // rows the parent exposes stay the ones it exposed before.
         auto batch = checked_pointer_cast<arrow::StructArray>(
-            arrow::StructArray::Make({describable, undescribable, ints},
+            arrow::StructArray::Make({layout_recoverable, layout_unrecoverable, ints},
                                      std::vector<std::string>{"s", "o", "i"})
                 .ValueOrDie());
         auto sliced = checked_pointer_cast<arrow::StructArray>(batch->Slice(1, 2));
-        ASSERT_OK_AND_ASSIGN(
-            std::shared_ptr<arrow::StructArray> flattened,
-            ArrowUtils::FlattenUnresolvableDictionaries(sliced, logical_type, pool));
+        ASSERT_OK_AND_ASSIGN(std::shared_ptr<arrow::StructArray> flattened,
+                             ArrowUtils::FlattenUnresolvableDictionaries(
+                                 sliced, logical_type, pool,
+                                 /*preserve_layout_recoverable_dictionaries=*/true));
         ASSERT_EQ(2, flattened->length());
         std::shared_ptr<arrow::Array> expected =
             arrow::ipc::internal::json::ArrayFromJSON(arrow::utf8(), R"([null, "d"])").ValueOrDie();
         ASSERT_TRUE(flattened->field(1)->Equals(*expected))
             << "actual=" << flattened->field(1)->ToString();
+    }
+    {
+        // The first dictionary models a format reader whose own lazy-decoding option emits
+        // dictionary(int32, utf8). Its layout is recoverable, so the selective path would preserve
+        // it; a writer that imports against the logical type still needs it decoded. The second
+        // dictionary models the wider shape emitted by the built-in ORC reader.
+        auto batch = checked_pointer_cast<arrow::StructArray>(
+            arrow::StructArray::Make({layout_recoverable, layout_unrecoverable, ints},
+                                     std::vector<std::string>{"s", "o", "i"})
+                .ValueOrDie());
+        ASSERT_OK_AND_ASSIGN(std::shared_ptr<arrow::StructArray> flattened,
+                             ArrowUtils::FlattenUnresolvableDictionaries(
+                                 batch, logical_type, pool,
+                                 /*preserve_layout_recoverable_dictionaries=*/false));
+        ASSERT_TRUE(flattened->field(0)->type()->Equals(*arrow::utf8()))
+            << flattened->field(0)->type()->ToString();
+        ASSERT_TRUE(flattened->field(1)->type()->Equals(*arrow::utf8()))
+            << flattened->field(1)->type()->ToString();
+        ASSERT_EQ(arrow::Type::INT32, flattened->field(2)->type()->id());
+
+        std::shared_ptr<arrow::Array> expected =
+            arrow::ipc::internal::json::ArrayFromJSON(arrow::utf8(), R"(["a", "b", "a"])")
+                .ValueOrDie();
+        ASSERT_TRUE(flattened->field(0)->Equals(*expected))
+            << "actual=" << flattened->field(0)->ToString();
+    }
+    {
+        // The batch the selective path returns by identity is copied and decoded here instead:
+        // "nothing to do" is a statement about the destination, not about the batch alone.
+        auto batch = checked_pointer_cast<arrow::StructArray>(
+            arrow::StructArray::Make({layout_recoverable, layout_recoverable, ints},
+                                     std::vector<std::string>{"s", "o", "i"})
+                .ValueOrDie());
+        ASSERT_OK_AND_ASSIGN(std::shared_ptr<arrow::StructArray> flattened,
+                             ArrowUtils::FlattenUnresolvableDictionaries(
+                                 batch, logical_type, pool,
+                                 /*preserve_layout_recoverable_dictionaries=*/false));
+        ASSERT_NE(batch, flattened);
+        ASSERT_TRUE(flattened->field(0)->type()->Equals(*arrow::utf8()));
+        ASSERT_TRUE(flattened->field(1)->type()->Equals(*arrow::utf8()));
     }
 }
 

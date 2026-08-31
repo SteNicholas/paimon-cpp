@@ -219,12 +219,16 @@ Result<std::vector<std::shared_ptr<DataFileMeta>>> AppendOnlyFileStoreWrite::Com
         PAIMON_ASSIGN_OR_RAISE(struct_array, ArrowUtils::RemoveFieldFromStructArray(
                                                  struct_array, SpecialFields::ValueKind().Name()));
         // The export below drops the type, leaving the writer to recover each column's encoding
-        // from the batch layout alone. Decode here, while the type is still known, whatever that
-        // recovery cannot describe - an ORC reader under lazy decoding hands over
-        // `dictionary(int64, large_utf8)`, which a layout says nothing about. Only those columns
-        // pay for it; a Parquet passthrough column stays encoded.
-        PAIMON_ASSIGN_OR_RAISE(struct_array, ArrowUtils::FlattenUnresolvableDictionaries(
-                                                 struct_array, logical_type, arrow_pool.get()));
+        // from the layout alone. Decode here, while the type is still known, every dictionary a
+        // veto forbids this rewrite from preserving; otherwise decode only shapes the layout
+        // cannot describe, such as the `dictionary(int64, large_utf8)` an ORC reader hands over
+        // under lazy decoding. A veto turns off the Parquet option, but another format's reader
+        // may emit dictionaries independently of it.
+        PAIMON_ASSIGN_OR_RAISE(
+            struct_array,
+            ArrowUtils::FlattenUnresolvableDictionaries(
+                struct_array, logical_type, arrow_pool.get(),
+                /*preserve_layout_recoverable_dictionaries=*/!veto_reason.has_value()));
         PAIMON_RETURN_NOT_OK_FROM_ARROW(
             arrow::ExportArray(*struct_array, c_array.get(), c_schema.get()));
         ArrowSchemaRelease(c_schema.get());
