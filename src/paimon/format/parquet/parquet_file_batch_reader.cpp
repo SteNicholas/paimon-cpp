@@ -210,7 +210,18 @@ std::set<int32_t> ParquetFileBatchReader::ResolveFullyDictionaryEncodedColumns(
     for (int32_t i = 0; i < schema->num_columns(); ++i) {
         // Arrow only reads BYTE_ARRAY leaves as dictionaries, and only a top-level column can be
         // forwarded to the writer without rebuilding the nesting around it.
+        //
+        // `is_string()` narrows that further to STRING, leaving out the other BYTE_ARRAY leaf,
+        // BINARY. This is the reader's restriction, not the format's: the writer takes
+        // `dictionary(int32, binary)` and ArrowUtils::IsDictionaryLayoutRecoverableValueType()
+        // accepts it, but the option applies to every read of the table and the value accessors
+        // cannot read one. ColumnarUtils::GetView() asserts on a dictionary whose values are
+        // neither STRING nor LARGE_STRING and returns an empty view in a release build, and
+        // LiteralConverter rejects it. Every consumer here understands a STRING dictionary because
+        // the ORC reader has always produced one under lazy decoding; none was ever handed a
+        // BINARY one. Widening this needs those consumers first, not just the gate.
         if (schema->Column(i)->physical_type() == ::parquet::Type::BYTE_ARRAY &&
+            schema->Column(i)->logical_type()->is_string() &&
             schema->GetColumnRoot(i)->is_primitive()) {
             columns.insert(i);
         }
@@ -269,7 +280,7 @@ std::shared_ptr<arrow::DataType> ParquetFileBatchReader::ApplyDictionaryReadType
         // ends have to agree on which encodings survive the round trip, or a column this hands on
         // encoded is one the writer refuses.
         if (dictionary_fields_.count(field->name()) > 0 &&
-            ArrowUtils::IsParquetDictionaryValueType(*field->type())) {
+            ArrowUtils::IsDictionaryLayoutRecoverableValueType(*field->type())) {
             fields.push_back(field->WithType(arrow::dictionary(arrow::int32(), field->type())));
         } else {
             fields.push_back(field);

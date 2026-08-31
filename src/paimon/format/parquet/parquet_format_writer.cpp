@@ -25,7 +25,7 @@
 
 #include "arrow/array/array_dict.h"
 #include "arrow/c/bridge.h"
-#include "arrow/compute/api.h"
+#include "arrow/compute/cast.h"
 #include "arrow/memory_pool.h"
 #include "arrow/record_batch.h"
 #include "arrow/type.h"
@@ -36,6 +36,7 @@
 #include "paimon/common/utils/arrow/arrow_utils.h"
 #include "paimon/common/utils/arrow/status_utils.h"
 #include "paimon/common/utils/checked_cast.h"
+#include "paimon/core/casting/casting_utils.h"
 #include "paimon/format/parquet/parquet_format_defs.h"
 #include "parquet/arrow/writer.h"
 #include "parquet/properties.h"
@@ -82,25 +83,20 @@ Status ParquetFormatWriter::AddBatch(ArrowArray* batch) {
 }
 
 Result<std::shared_ptr<arrow::Schema>> ParquetFormatWriter::ResolveBatchSchema(
-    const ::ArrowArray* batch) {
+    const ::ArrowArray* batch) const {
     PAIMON_ASSIGN_OR_RAISE(
         std::shared_ptr<arrow::DataType> batch_type,
         ArrowUtils::ResolveParquetDictionaryStructType(logical_struct_type_, batch));
     if (batch_type == logical_struct_type_) {
         return schema_;
     }
-    if (dictionary_batch_type_ == nullptr || !dictionary_batch_type_->Equals(*batch_type)) {
-        dictionary_batch_type_ = batch_type;
-        dictionary_batch_schema_ = arrow::schema(batch_type->fields(), schema_->metadata());
-    }
-    return dictionary_batch_schema_;
+    return arrow::schema(batch_type->fields(), schema_->metadata());
 }
 
 Result<std::shared_ptr<arrow::RecordBatch>> ParquetFormatWriter::FlattenUnwritableDictionaries(
     const std::shared_ptr<arrow::RecordBatch>& record_batch) const {
     arrow::ArrayVector columns;
     arrow::FieldVector fields;
-    arrow::compute::ExecContext exec_context(pool_.get());
     for (int32_t i = 0; i < record_batch->num_columns(); ++i) {
         const std::shared_ptr<arrow::Array>& column = record_batch->column(i);
         if (column->type_id() != arrow::Type::DICTIONARY ||
@@ -112,11 +108,11 @@ Result<std::shared_ptr<arrow::RecordBatch>> ParquetFormatWriter::FlattenUnwritab
             fields = record_batch->schema()->fields();
         }
         const auto& dictionary_type = checked_cast<const arrow::DictionaryType&>(*column->type());
-        PAIMON_ASSIGN_OR_RAISE_FROM_ARROW(
-            arrow::Datum flattened,
-            arrow::compute::Cast(column, dictionary_type.value_type(),
-                                 arrow::compute::CastOptions::Safe(), &exec_context));
-        columns[i] = flattened.make_array();
+        PAIMON_ASSIGN_OR_RAISE(
+            std::shared_ptr<arrow::Array> flattened,
+            CastingUtils::Cast(column, dictionary_type.value_type(),
+                               arrow::compute::CastOptions::Safe(), pool_.get()));
+        columns[i] = std::move(flattened);
         fields[i] = fields[i]->WithType(dictionary_type.value_type());
     }
     if (columns.empty()) {

@@ -57,12 +57,10 @@
 #include "paimon/core/utils/file_store_path_factory.h"
 #include "paimon/core/utils/snapshot_manager.h"
 #include "paimon/executor.h"
-#include "paimon/format/parquet/parquet_format_defs.h"
 #include "paimon/logging.h"
 #include "paimon/read_context.h"
 #include "paimon/realtime/realtime_context.h"
 #include "paimon/result.h"
-#include "parquet/properties.h"
 namespace arrow {
 class Schema;
 }  // namespace arrow
@@ -71,6 +69,22 @@ namespace paimon {
 class DataFilePathFactory;
 class MemoryPool;
 class SchemaManager;
+
+namespace {
+
+// Spelled out rather than taken from `paimon/format/parquet/parquet_format_defs.h`: the format
+// layer is pluggable, and an engine that supplies its own Parquet implementation need not export
+// those symbols. The two defaults restate what the Parquet layer resolves these options to when
+// the table does not set them - ParquetWriterBuilder for the first, ParquetFileBatchReader for the
+// second.
+constexpr char kParquetFormat[] = "parquet";
+constexpr char kParquetEnableDictionary[] = "parquet.enable-dictionary";
+constexpr char kParquetReadEnableDictionaryPassthrough[] =
+    "parquet.read.enable-dictionary-passthrough";
+constexpr bool kDefaultParquetEnableDictionary = true;
+constexpr bool kDefaultParquetReadEnableDictionaryPassthrough = false;
+
+}  // namespace
 
 AppendOnlyFileStoreWrite::AppendOnlyFileStoreWrite(
     const std::shared_ptr<FileStorePathFactory>& file_store_path_factory,
@@ -155,10 +169,11 @@ Result<std::vector<std::shared_ptr<DataFileMeta>>> AppendOnlyFileStoreWrite::Com
     PAIMON_ASSIGN_OR_RAISE(
         std::shared_ptr<ShreddingWritePlanFactory> plan_factory,
         ShreddingWritePlanFactories::SelectActive(options_, write_schema_, pool_));
-    PAIMON_ASSIGN_OR_RAISE(bool dictionary_passthrough, CanUseDictionaryPassthrough(plan_factory));
+    PAIMON_ASSIGN_OR_RAISE(std::optional<std::string> veto_reason,
+                           GetDictionaryPassthroughVetoReason(plan_factory));
     PAIMON_ASSIGN_OR_RAISE(
         std::unique_ptr<BatchReader> reader,
-        CreateFilesReader(partition, bucket, dv_factory, to_compact, dictionary_passthrough));
+        CreateFilesReader(partition, bucket, dv_factory, to_compact, veto_reason));
     PAIMON_ASSIGN_OR_RAISE(std::shared_ptr<DataFilePathFactory> data_file_path_factory,
                            file_store_path_factory_->CreateDataFilePathFactory(partition, bucket));
     PAIMON_ASSIGN_OR_RAISE(WriterFactory writer_factory,
@@ -299,25 +314,28 @@ Result<AppendOnlyFileStoreWrite::WriterFactory> AppendOnlyFileStoreWrite::GetDat
         data_file_path_factory, pool_);
 }
 
-Result<bool> AppendOnlyFileStoreWrite::CanUseDictionaryPassthrough(
+Result<std::optional<std::string>> AppendOnlyFileStoreWrite::GetDictionaryPassthroughVetoReason(
     const std::shared_ptr<ShreddingWritePlanFactory>& plan_factory) const {
     std::shared_ptr<FileFormat> file_format = options_.GetFileFormat();
-    if (!file_format || file_format->Identifier() != "parquet") {
-        return false;
+    if (!file_format || file_format->Identifier() != kParquetFormat) {
+        return std::optional<std::string>("the table does not write Parquet");
     }
-    PAIMON_ASSIGN_OR_RAISE(
-        bool enable_dictionary,
-        OptionsUtils::GetValueFromMap<bool>(options_.ToMap(), parquet::PARQUET_ENABLE_DICTIONARY,
-                                            ::parquet::DEFAULT_IS_DICTIONARY_ENABLED));
+    PAIMON_ASSIGN_OR_RAISE(bool enable_dictionary, OptionsUtils::GetValueFromMap<bool>(
+                                                       options_.ToMap(), kParquetEnableDictionary,
+                                                       kDefaultParquetEnableDictionary));
     if (!enable_dictionary) {
-        return false;
+        return std::optional<std::string>("parquet.enable-dictionary is false");
     }
-    return plan_factory == nullptr;
+    if (plan_factory != nullptr) {
+        return std::optional<std::string>("the table is written through a shredding writer");
+    }
+    return std::optional<std::string>();
 }
 
 Result<std::unique_ptr<BatchReader>> AppendOnlyFileStoreWrite::CreateFilesReader(
     const BinaryRow& partition, int32_t bucket, DeletionVector::Factory dv_factory,
-    const std::vector<std::shared_ptr<DataFileMeta>>& files, bool dictionary_passthrough) const {
+    const std::vector<std::shared_ptr<DataFileMeta>>& files,
+    const std::optional<std::string>& veto_reason) const {
     ReadContextBuilder context_builder(root_path_);
     context_builder.SetOptions(options_.ToMap())
         .WithFileSystem(options_.GetFileSystem())
@@ -327,16 +345,22 @@ Result<std::unique_ptr<BatchReader>> AppendOnlyFileStoreWrite::CreateFilesReader
         .WithMemoryPool(pool_);
     PAIMON_ASSIGN_OR_RAISE(std::shared_ptr<ReadContext> read_context, context_builder.Finish());
     std::map<std::string, std::string> options = options_.ToMap();
-    // CompactRewrite copies batches into the rewritten file without looking at any value, so a
-    // column the input files already store dictionary-encoded can keep that encoding instead of
-    // being expanded here and hashed again by the writer.
-    if (dictionary_passthrough) {
-        // `emplace` so an explicit table option can still turn it off.
-        options.emplace(parquet::PARQUET_READ_ENABLE_DICTIONARY_PASSTHROUGH, "true");
-    } else {
-        // Not negotiable the other way: a writer that cannot take a dictionary-encoded batch must
-        // not receive one because the table happens to set the read option.
-        options[parquet::PARQUET_READ_ENABLE_DICTIONARY_PASSTHROUGH] = "false";
+    // Only the veto is applied here: forwarding is the table's decision, taken through
+    // `parquet.read.enable-dictionary-passthrough`, but a writer that cannot take a
+    // dictionary-encoded batch must not receive one because the table happens to set that option.
+    if (veto_reason.has_value()) {
+        // Overriding a table option is worth a line, but only for a table that set it:
+        // otherwise every rewrite would report a decision nobody made. A malformed value only
+        // costs the log line - the override below replaces it either way, so there is nothing to
+        // fail the rewrite over.
+        Result<bool> requested =
+            OptionsUtils::GetValueFromMap<bool>(options, kParquetReadEnableDictionaryPassthrough,
+                                                kDefaultParquetReadEnableDictionaryPassthrough);
+        if (requested.ok() && requested.value()) {
+            PAIMON_LOG_DEBUG(logger_, "Ignoring %s for this compaction rewrite: %s",
+                             kParquetReadEnableDictionaryPassthrough, veto_reason->c_str());
+        }
+        options[kParquetReadEnableDictionaryPassthrough] = "false";
     }
     PAIMON_ASSIGN_OR_RAISE(std::shared_ptr<InternalReadContext> internal_read_context,
                            InternalReadContext::Create(read_context, table_schema_, options));

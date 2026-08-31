@@ -168,8 +168,9 @@ class ParquetFileBatchReader : public PrefetchFileBatchReader {
         const std::map<std::string, std::string>& options, int32_t batch_size,
         const std::optional<ReadHints>& hints);
 
-    /// Leaf column indices that are candidates for `set_read_dictionary`: non-nested BYTE_ARRAY
-    /// columns whose every data page, in every row group, is dictionary-encoded.
+    /// Leaf column indices that are candidates for `set_read_dictionary`: non-nested STRING
+    /// columns whose every data page, in every row group, is dictionary-encoded. The definition
+    /// says why STRING and not every BYTE_ARRAY leaf.
     static std::set<int32_t> ResolveFullyDictionaryEncodedColumns(
         const ::parquet::FileMetaData& metadata);
 

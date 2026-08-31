@@ -275,12 +275,36 @@ Result<std::shared_ptr<arrow::Array>> MakeDictionaryColumn(
     return array;
 }
 
-// STRING values: binary-like, so arrow can write the indices directly.
+// STRING values: binary-like, so arrow can write the indices directly. Every batch is built over
+// the same alphabet, the shape a single input file produces.
 Result<std::shared_ptr<arrow::Array>> MakeDictionaryStringColumn(int64_t num_rows, int64_t offset,
                                                                  int64_t cardinality) {
     PAIMON_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> values,
                            MakeStringColumn(cardinality, /*offset=*/0, cardinality));
     return MakeDictionaryColumn(values, num_rows, offset);
+}
+
+// The same, except every batch carries its own dictionary - the shape a compaction rewrite
+// produces, where each input file supplies one. A Parquet column chunk holds a single dictionary,
+// so arrow keeps the first and falls back to plain encoding for the rest of the row group
+// (column_writer.cc, `dictionary->Equals(*preserved_dictionary_)`).
+//
+// The decoded column is byte for byte what MakeDictionaryStringColumn produces: same values, same
+// order, same widths, same cardinality. Only the dictionary object differs, so the delta between
+// the two benchmarks is the cost of the fallback and nothing else. Generating a fresh alphabet per
+// batch instead would change the data as well - different strings, different widths, a different
+// global cardinality - and the comparison would measure all of that at once.
+Result<std::shared_ptr<arrow::Array>> MakeChangingDictionaryStringColumn(int64_t num_rows,
+                                                                         int64_t offset,
+                                                                         int64_t cardinality) {
+    // The alphabet is rotated by one position per batch and the indices are shifted the other way,
+    // which cancels: index `(offset + cardinality - rotation + i) % cardinality` into an alphabet
+    // whose entry `j` is `value_<(j + rotation) % cardinality>` is `value_<(offset + i) %
+    // cardinality>` either way. `+ cardinality` keeps the shifted offset non-negative.
+    const int64_t rotation = num_rows > 0 ? (offset / num_rows) % cardinality : 0;
+    PAIMON_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> values,
+                           MakeStringColumn(cardinality, rotation, cardinality));
+    return MakeDictionaryColumn(values, num_rows, offset + cardinality - rotation);
 }
 
 // INT32 values: is_base_binary_like excludes them, so arrow densifies before writing. The
@@ -979,11 +1003,33 @@ void BM_ParquetWrite_DictionaryString(::benchmark::State& state) {
 // logical schema - and the batch arrives dictionary-encoded anyway. The delta against
 // BM_ParquetWrite_String at the same cardinality is what the passthrough buys on the write side,
 // including the per-batch schema fixup that recovers the encoding from the batch layout.
+//
+// One alphabet for the whole file, so the writer keeps writing indices: the favourable half of the
+// passthrough. BM_ParquetWrite_ChangingDictionaryStringIntoStringSchema is the other half, and a
+// rewrite of several input files lands between the two.
 void BM_ParquetWrite_DictionaryStringIntoStringSchema(::benchmark::State& state) {
     const int64_t cardinality = state.range(0);
     RunWriteBenchmark(state, StringSchema(),
                       SingleEncodedColumnBatch([cardinality](int64_t rows, int64_t offset) {
                           return MakeDictionaryStringColumn(rows, offset, cardinality);
+                      }),
+                      kRowsPerBatch, /*options=*/{}, kDefaultCompression);
+}
+
+// arg: dictionary cardinality. The same write, except every batch brings its own dictionary, as
+// the input files of a compaction do, which is the cost of forwarding an encoding the writer
+// cannot reuse. All three of BM_ParquetWrite_String,
+// BM_ParquetWrite_DictionaryStringIntoStringSchema and this one write the same logical column at
+// the same cardinality, so the triple reads directly: the middle one against the first is what the
+// passthrough buys, this one against the middle is what the fallback costs in time, and this one
+// against the first is the output size a rewrite that materialized and rebuilt would have produced.
+// Row groups here are cut the way they are in production - by size and by the writer's memory
+// limit, not at batch boundaries.
+void BM_ParquetWrite_ChangingDictionaryStringIntoStringSchema(::benchmark::State& state) {
+    const int64_t cardinality = state.range(0);
+    RunWriteBenchmark(state, StringSchema(),
+                      SingleEncodedColumnBatch([cardinality](int64_t rows, int64_t offset) {
+                          return MakeChangingDictionaryStringColumn(rows, offset, cardinality);
                       }),
                       kRowsPerBatch, /*options=*/{}, kDefaultCompression);
 }
@@ -1350,6 +1396,14 @@ BENCHMARK(BM_ParquetWrite_DictionaryString)
 // are its baselines: the three have to line up point for point or the low/medium/high comparison
 // cannot be made.
 BENCHMARK(BM_ParquetWrite_DictionaryStringIntoStringSchema)
+    ->ArgName("cardinality")
+    ->Arg(10)
+    ->Arg(1000)
+    ->Arg(kRowsPerFile)
+    ->Unit(benchmark::kMillisecond)
+    ->UseRealTime();
+// Same axis again, so the three points can be read against the run above them.
+BENCHMARK(BM_ParquetWrite_ChangingDictionaryStringIntoStringSchema)
     ->ArgName("cardinality")
     ->Arg(10)
     ->Arg(1000)

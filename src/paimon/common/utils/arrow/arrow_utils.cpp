@@ -26,7 +26,6 @@
 #include "arrow/buffer.h"
 #include "arrow/c/abi.h"
 #include "arrow/compute/cast.h"
-#include "arrow/compute/exec.h"
 #include "arrow/type_traits.h"
 #include "arrow/util/bit_util.h"
 #include "arrow/util/bitmap_ops.h"
@@ -36,6 +35,7 @@
 #include "paimon/common/utils/arrow/vector_utils.h"
 #include "paimon/common/utils/checked_cast.h"
 #include "paimon/common/utils/string_utils.h"
+#include "paimon/core/casting/casting_utils.h"
 
 namespace paimon {
 
@@ -43,14 +43,14 @@ namespace {
 
 // Whether `type` is a dictionary this can carry across the C data interface unchanged. The index
 // width is part of the test because nothing in a layout reveals it; see
-// ArrowUtils::IsParquetDictionaryValueType().
+// ArrowUtils::IsDictionaryLayoutRecoverableValueType().
 bool IsResolvableDictionary(const arrow::DataType& type) {
     if (type.id() != arrow::Type::DICTIONARY) {
         return false;
     }
     const auto& dictionary_type = checked_cast<const arrow::DictionaryType&>(type);
     return dictionary_type.index_type()->id() == arrow::Type::INT32 &&
-           ArrowUtils::IsParquetDictionaryValueType(*dictionary_type.value_type());
+           ArrowUtils::IsDictionaryLayoutRecoverableValueType(*dictionary_type.value_type());
 }
 
 // Whether `type` is or contains a dictionary at any depth.
@@ -552,10 +552,28 @@ Result<arrow::Compression::type> ArrowUtils::GetCompressionType(const std::strin
     return compression_type;
 }
 
-bool ArrowUtils::IsParquetDictionaryValueType(const arrow::DataType& type) {
-    return type.id() == arrow::Type::STRING || type.id() == arrow::Type::BINARY;
+// `is_binary_like()` is BINARY and STRING and nothing else. `LARGE_STRING` is left out even though
+// it is binary-like: the ORC reader widens strings to `dictionary(int64(), large_utf8())` under
+// lazy decoding, and a layout reports neither index nor offset width, so reading that back as
+// `int32` indices over `int32` offsets would silently reinterpret both buffers instead of failing.
+//
+// This narrows what may be carried; it cannot verify what was. See
+// ResolveParquetDictionaryStructType() for where the index width becomes a caller contract.
+bool ArrowUtils::IsDictionaryLayoutRecoverableValueType(const arrow::DataType& type) {
+    return arrow::is_binary_like(type.id());
 }
 
+// Why the header calls the `int32` index width a contract rather than a check: the value-type
+// check rejects `dictionary(int64(), large_utf8())`, the shape the ORC reader produces, but
+// nothing here can tell `dictionary(int32(), utf8())` apart from `dictionary(int64(), utf8())`,
+// and the second would be read as the first.
+//
+// So the contract binds the producer, not the callers: `ParquetFormatWriter::ResolveBatchSchema`
+// and `DataFileWriterBase::AddFileIndexBatch` see only the layout.
+// `AppendOnlyFileStoreWrite::CompactRewrite` is today's only production path that can hand over a
+// batch whose dictionaries the schema does not declare, and it honours the contract by running
+// FlattenUnresolvableDictionaries() first. Closing the hole instead of narrowing it needs the real
+// `ArrowSchema` to reach the writer, which `FormatWriter::AddBatch(ArrowArray*)` drops.
 Result<std::shared_ptr<arrow::DataType>> ArrowUtils::ResolveParquetDictionaryStructType(
     const std::shared_ptr<arrow::DataType>& logical_type, const ::ArrowArray* batch) {
     if (batch == nullptr || logical_type->id() != arrow::Type::STRUCT ||
@@ -584,7 +602,7 @@ Result<std::shared_ptr<arrow::DataType>> ArrowUtils::ResolveParquetDictionaryStr
             fields.push_back(field);
             continue;
         }
-        if (!IsParquetDictionaryValueType(*field->type())) {
+        if (!IsDictionaryLayoutRecoverableValueType(*field->type())) {
             return Status::NotImplemented(fmt::format(
                 "dictionary-encoded column '{}' of type {} cannot be resolved from the layout of "
                 "an ArrowArray, which pins down neither the index nor the offset width",
@@ -607,7 +625,6 @@ Result<std::shared_ptr<arrow::StructArray>> ArrowUtils::FlattenUnresolvableDicti
         return batch;
     }
     const auto& logical_struct_type = checked_cast<const arrow::StructType&>(*logical_type);
-    arrow::compute::ExecContext exec_context(pool);
     std::shared_ptr<arrow::ArrayData> data;
     arrow::FieldVector fields = batch_type->fields();
     for (int32_t i = 0; i < batch_type->num_fields(); ++i) {
@@ -629,11 +646,11 @@ Result<std::shared_ptr<arrow::StructArray>> ArrowUtils::FlattenUnresolvableDicti
         }
         // Decode the whole child rather than the slice the parent exposes, so the replacement
         // lines up with the offset and length the parent still carries.
-        PAIMON_ASSIGN_OR_RAISE_FROM_ARROW(
-            arrow::Datum decoded,
-            arrow::compute::Cast(arrow::MakeArray(data->child_data[i]), logical_field->type(),
-                                 arrow::compute::CastOptions::Safe(), &exec_context));
-        data->child_data[i] = decoded.array();
+        PAIMON_ASSIGN_OR_RAISE(
+            std::shared_ptr<arrow::Array> decoded,
+            CastingUtils::Cast(arrow::MakeArray(data->child_data[i]), logical_field->type(),
+                               arrow::compute::CastOptions::Safe(), pool));
+        data->child_data[i] = decoded->data();
         fields[i] = field->WithType(logical_field->type());
     }
     if (data == nullptr) {

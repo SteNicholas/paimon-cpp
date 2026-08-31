@@ -102,14 +102,15 @@ static inline const char PARQUET_READ_ENABLE_PAGE_INDEX_FILTER[] =
 // Default is true.
 static inline const char PARQUET_READ_ENABLE_PRE_BUFFER[] = "parquet.read.enable-pre-buffer";
 
-// Emit dictionary-encoded STRING/BINARY columns as Arrow DictionaryArray instead of one copy of
-// the value per row. Restricted to non-nested leaf columns whose every data page is already
-// dictionary-encoded, so the reader only ever hands on a dictionary the file itself has.
+// Emit dictionary-encoded STRING columns as Arrow DictionaryArray instead of one copy of the
+// value per row. Which columns qualify, and why BINARY does not, is decided by
+// ParquetFileBatchReader::ResolveFullyDictionaryEncodedColumns().
 //
-// Off by default because it only pays off when the consumer forwards the batch without inspecting
-// values, which is why the append compaction rewrite is the one caller that opts in. Value
-// accessors have to unwrap DictionaryArray to read such a column; `ColumnarUtils::GetView` does,
-// but that is not true of every accessor, so a new consumer has to be checked before enabling it.
+// Off by default, and set on the table by a user who has measured the trade-off - see the
+// "Dictionary Passthrough" section of `docs/source/user_guide/compaction.rst`. The append
+// compaction rewrite is the only consumer that gains from it, and it can only veto the option,
+// never turn it on. Being a read option it applies to every read of the table, so a consumer that
+// reads values through its own accessor has to unwrap DictionaryArray.
 static inline const char PARQUET_READ_ENABLE_DICTIONARY_PASSTHROUGH[] =
     "parquet.read.enable-dictionary-passthrough";
 

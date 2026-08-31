@@ -150,6 +150,34 @@ class AppendCompactionInteTest : public testing::Test,
         }
     }
 
+    // Reports the struct type of the first batch `path` yields when read through the format layer
+    // with `options`. The encoding a reader hands over only exists between the reader and its
+    // consumer - ReadResultCollector decodes it on the way out - so the raw batch is imported here
+    // rather than going through the table read path.
+    void ReadFirstBatchType(const std::shared_ptr<FileSystem>& file_system, const std::string& path,
+                            const std::string& file_format,
+                            const std::map<std::string, std::string>& options,
+                            std::shared_ptr<arrow::DataType>* batch_type) {
+        ASSERT_OK_AND_ASSIGN(auto unique_stream, file_system->Open(path));
+        std::shared_ptr<InputStream> stream(std::move(unique_stream));
+        ASSERT_OK_AND_ASSIGN(auto format, FileFormatFactory::Get(file_format, options));
+        ASSERT_OK_AND_ASSIGN(auto reader_builder, format->CreateReaderBuilder(10));
+        ASSERT_OK_AND_ASSIGN(auto reader, reader_builder->Build(stream));
+        ASSERT_OK_AND_ASSIGN(auto c_schema, reader->GetFileSchema());
+        ASSERT_OK(reader->SetReadSchema(c_schema.get(), /*predicate=*/nullptr,
+                                        /*selection_bitmap=*/std::nullopt));
+        ASSERT_OK_AND_ASSIGN(BatchReader::ReadBatch batch, reader->NextBatch());
+        ASSERT_FALSE(BatchReader::IsEofBatch(batch));
+        auto& [c_array, c_array_schema] = batch;
+        std::shared_ptr<arrow::Array> array =
+            arrow::ImportArray(c_array.get(), c_array_schema.get()).ValueOrDie();
+        *batch_type = array->type();
+    }
+
+    static std::string DataFilePath(const std::shared_ptr<DataSplitImpl>& split, size_t index = 0) {
+        return PathUtil::JoinPath(split->BucketPath(), split->DataFiles()[index]->file_name);
+    }
+
  private:
     std::shared_ptr<MemoryPool> pool_;
 };
@@ -831,9 +859,10 @@ TEST_F(AppendCompactionInteTest, TestAppendTableCompactionWithIOException) {
 // index writer and to the format writer, and both of them recover each column's encoding from the
 // batch layout after the type has been dropped by the C data interface.
 //
-// Parameterised over the two formats that have an encoding to forward or to suppress: Parquet
-// turns the passthrough on, ORC forces it off because its writer cannot take a dictionary-encoded
-// batch. ORC lazy decoding is on throughout, which makes the ORC reader hand over
+// Both parameters set `parquet.read.enable-dictionary-passthrough` on the table, which is what the
+// rewrite requires - it never enables the passthrough by itself. Parquet then forwards the
+// encoding; ORC has the option vetoed because its writer cannot take a dictionary-encoded batch.
+// ORC lazy decoding is on throughout, which makes the ORC reader hand over
 // `dictionary(int64, large_utf8)` - a shape no layout can resolve, so it exercises the
 // decode-at-the-source path rather than the passthrough.
 TEST_P(AppendCompactionInteTest, TestAppendTableCompactionDictionaryPassthrough) {
@@ -844,11 +873,13 @@ TEST_P(AppendCompactionInteTest, TestAppendTableCompactionDictionaryPassthrough)
     auto dir = UniqueTestDirectory::Create();
     ASSERT_TRUE(dir);
 
-    // `s` and `b` are low-cardinality and come back encoded; `id` is INT32, which the gate excludes
-    // by physical type, so the rewrite carries both kinds of column at once. `u` holds a distinct
-    // value per row, the shape passthrough saves least on. The cardinality-driven half of the gate
-    // - a column that starts dictionary-encoded and falls back to plain partway through a file -
-    // needs more rows than a readable fixture holds and is covered by
+    // `s` is low-cardinality STRING and comes back encoded, so the rewrite carries an encoded and
+    // a materialized column at once. The other three are each excluded for their own reason: `id`
+    // is INT32, which the gate excludes by physical type; `b` is BINARY, which Parquet stores in
+    // the same BYTE_ARRAY leaf as STRING but which no value accessor can read as a dictionary; `u`
+    // holds a distinct value per row, the shape passthrough saves least on. The cardinality-driven
+    // half of the gate - a column that starts dictionary-encoded and falls back to plain partway
+    // through a file - needs more rows than a readable fixture holds and is covered by
     // ParquetFileBatchReaderTest.TestDictionaryPassthroughSkipsFallbackToPlain instead.
     arrow::FieldVector fields = {
         arrow::field("id", arrow::int32()), arrow::field("s", arrow::utf8()),
@@ -860,6 +891,9 @@ TEST_P(AppendCompactionInteTest, TestAppendTableCompactionDictionaryPassthrough)
         {Options::BUCKET, "1"},
         {Options::BUCKET_KEY, "id"},
         {Options::FILE_SYSTEM, "local"},
+        // Opt in explicitly: the rewrite never turns the passthrough on by itself. On the ORC
+        // parameter this doubles as the assertion that the option alone is not enough.
+        {"parquet.read.enable-dictionary-passthrough", "true"},
         {"orc.read.enable-lazy-decoding", "true"},
         // Above the distinct/total ratio of every column here, so ORC dictionary-encodes rather
         // than leaving it to its own heuristic and making the assertion below data-dependent.
@@ -894,13 +928,31 @@ TEST_P(AppendCompactionInteTest, TestAppendTableCompactionDictionaryPassthrough)
                                          /*expected_commit_messages=*/std::nullopt));
     }
 
+    // The rewrite must not change these, and neither must reading them back encoded.
+    arrow::FieldVector fields_with_row_kind = fields;
+    fields_with_row_kind.insert(fields_with_row_kind.begin(),
+                                arrow::field("_VALUE_KIND", arrow::int8()));
+    auto read_type = arrow::struct_(fields_with_row_kind);
+    const std::string expected_rows = R"([
+        [0, 1, "aa", "p", "distinct_value_1"],
+        [0, 2, "bb", "q", "distinct_value_2"],
+        [0, 3, null, "p", "distinct_value_3"],
+        [0, 4, "aa", "q", "distinct_value_4"],
+        [0, 5, "cc", "r", "distinct_value_5"],
+        [0, 6, "dd", "r", "distinct_value_6"],
+        [0, 7, "cc", "s", "distinct_value_7"],
+        [0, 8, "dd", "s", "distinct_value_8"],
+        [0, 9, "aa", "p", "distinct_value_9"],
+        [0, 10, "ee", "t", "distinct_value_10"]
+    ])";
+
     {
         // What the rewrite is about to read, checked on an input file with the same options the
         // rewrite uses. Asserting the read type here is what makes the two directions facts of
-        // this test rather than assumptions: on Parquet `s` and `b` arrive as DictionaryArray and
-        // `id` does not, because the gate only considers BYTE_ARRAY leaves; on ORC `s` arrives as
-        // `dictionary(int64, large_utf8)`, the shape no ArrowArray layout can resolve and the one
-        // FlattenUnresolvableDictionaries has to decode before the batch reaches the writer.
+        // this test rather than assumptions: on Parquet `s` arrives as DictionaryArray while `id`
+        // and `b` do not; on ORC `s` arrives as `dictionary(int64, large_utf8)`, the shape no
+        // ArrowArray layout can resolve and the one FlattenUnresolvableDictionaries has to decode
+        // before the batch reaches the writer.
         ASSERT_OK_AND_ASSIGN(std::vector<std::shared_ptr<Split>> input_splits,
                              helper->NewScan(StartupMode::LatestFull(),
                                              /*snapshot_id=*/std::nullopt));
@@ -908,35 +960,18 @@ TEST_P(AppendCompactionInteTest, TestAppendTableCompactionDictionaryPassthrough)
         auto input_split = std::dynamic_pointer_cast<DataSplitImpl>(input_splits[0]);
         ASSERT_TRUE(input_split);
         ASSERT_EQ(3, input_split->DataFiles().size());
-        std::string input_path =
-            PathUtil::JoinPath(input_split->BucketPath(), input_split->DataFiles()[0]->file_name);
-        ASSERT_OK_AND_ASSIGN(auto unique_input_stream, dir->GetFileSystem()->Open(input_path));
-        std::shared_ptr<InputStream> input_stream(std::move(unique_input_stream));
-
-        std::map<std::string, std::string> passthrough_options = options;
-        passthrough_options["parquet.read.enable-dictionary-passthrough"] = "true";
-        ASSERT_OK_AND_ASSIGN(auto input_file_format,
-                             FileFormatFactory::Get(file_format, passthrough_options));
-        ASSERT_OK_AND_ASSIGN(auto input_reader_builder, input_file_format->CreateReaderBuilder(10));
-        ASSERT_OK_AND_ASSIGN(auto input_reader, input_reader_builder->Build(input_stream));
-        ASSERT_OK_AND_ASSIGN(auto c_input_schema, input_reader->GetFileSchema());
-        ASSERT_OK(input_reader->SetReadSchema(c_input_schema.get(), /*predicate=*/nullptr,
-                                              /*selection_bitmap=*/std::nullopt));
-        // Read one batch directly rather than through ReadResultCollector, which decodes
-        // dictionaries on the way out and would hide the very thing being asserted.
-        ASSERT_OK_AND_ASSIGN(BatchReader::ReadBatch input_batch, input_reader->NextBatch());
-        ASSERT_FALSE(BatchReader::IsEofBatch(input_batch));
-        auto& [input_c_array, input_c_schema] = input_batch;
-        std::shared_ptr<arrow::Array> input_array =
-            arrow::ImportArray(input_c_array.get(), input_c_schema.get()).ValueOrDie();
-        std::shared_ptr<arrow::DataType> input_type = input_array->type();
+        std::shared_ptr<arrow::DataType> input_type;
+        ASSERT_NO_FATAL_FAILURE(ReadFirstBatchType(dir->GetFileSystem(), DataFilePath(input_split),
+                                                   file_format, options, &input_type));
         ASSERT_EQ(arrow::Type::INT32, input_type->field(0)->type()->id()) << "column id";
         ASSERT_EQ(arrow::Type::DICTIONARY, input_type->field(1)->type()->id()) << "column s";
         if (file_format == "parquet") {
-            ASSERT_EQ(arrow::Type::DICTIONARY, input_type->field(2)->type()->id()) << "column b";
             ASSERT_TRUE(input_type->field(1)->type()->Equals(
                 *arrow::dictionary(arrow::int32(), arrow::utf8())))
                 << input_type->field(1)->type()->ToString();
+            // `b` is dictionary-encoded in the file exactly as `s` is - same physical type, same
+            // pages - and is still handed over materialized, because the gate stops at STRING.
+            ASSERT_EQ(arrow::Type::BINARY, input_type->field(2)->type()->id()) << "column b";
         } else {
             // The ORC adapter only dictionary-encodes STRING, so `b` stays materialized, and it
             // widens the values: `dictionary(int64, large_utf8)` is exactly the shape whose index
@@ -945,6 +980,14 @@ TEST_P(AppendCompactionInteTest, TestAppendTableCompactionDictionaryPassthrough)
                 *arrow::dictionary(arrow::int64(), arrow::large_utf8())))
                 << input_type->field(1)->type()->ToString();
         }
+
+        // The same files through the whole read path rather than the raw format reader: with the
+        // option on, this is where an encoded batch meets the projection, the concatenation and
+        // the collector. It only works here - after the rewrite the output column has fallen back
+        // to plain, so the read at the end of this test no longer carries a dictionary at all.
+        ASSERT_OK_AND_ASSIGN(bool input_read_success,
+                             helper->ReadAndCheckResult(read_type, input_splits, expected_rows));
+        ASSERT_TRUE(input_read_success);
     }
 
     ASSERT_OK(helper->write_->Compact(/*partition=*/{}, /*bucket=*/0, /*full_compaction=*/true));
@@ -964,22 +1007,21 @@ TEST_P(AppendCompactionInteTest, TestAppendTableCompactionDictionaryPassthrough)
     ASSERT_TRUE(data_split);
     ASSERT_EQ(1, data_split->DataFiles().size());
 
-    arrow::FieldVector fields_with_row_kind = fields;
-    fields_with_row_kind.insert(fields_with_row_kind.begin(),
-                                arrow::field("_VALUE_KIND", arrow::int8()));
-    auto read_type = arrow::struct_(fields_with_row_kind);
-    ASSERT_OK_AND_ASSIGN(bool success, helper->ReadAndCheckResult(read_type, data_splits, R"([
-        [0, 1, "aa", "p", "distinct_value_1"],
-        [0, 2, "bb", "q", "distinct_value_2"],
-        [0, 3, null, "p", "distinct_value_3"],
-        [0, 4, "aa", "q", "distinct_value_4"],
-        [0, 5, "cc", "r", "distinct_value_5"],
-        [0, 6, "dd", "r", "distinct_value_6"],
-        [0, 7, "cc", "s", "distinct_value_7"],
-        [0, 8, "dd", "s", "distinct_value_8"],
-        [0, 9, "aa", "p", "distinct_value_9"],
-        [0, 10, "ee", "t", "distinct_value_10"]
-    ])"));
+    if (file_format == "parquet") {
+        // What the passthrough costs, on the file it just produced. Three input files brought
+        // three different dictionaries into one output row group, so the writer kept the first and
+        // wrote the rest plain; the gate then declines the output column, which is what makes it
+        // ineligible for the next compaction round and bigger than a rewrite from materialized
+        // values. TestAppendTableCompactionDictionaryPassthroughDefaultOff is the other side.
+        std::shared_ptr<arrow::DataType> output_type;
+        ASSERT_NO_FATAL_FAILURE(ReadFirstBatchType(dir->GetFileSystem(), DataFilePath(data_split),
+                                                   file_format, options, &output_type));
+        ASSERT_NE(arrow::Type::DICTIONARY, output_type->field(1)->type()->id())
+            << "column s: " << output_type->field(1)->type()->ToString();
+    }
+
+    ASSERT_OK_AND_ASSIGN(bool success,
+                         helper->ReadAndCheckResult(read_type, data_splits, expected_rows));
     ASSERT_TRUE(success);
 
     // The bitmap index on `s` is built from the rewritten batch, which reaches the index writer
@@ -1004,20 +1046,24 @@ TEST_P(AppendCompactionInteTest, TestAppendTableCompactionDictionaryPassthrough)
     ASSERT_TRUE(expected->Equals(filtered)) << "actual=" << filtered->ToString();
 }
 
-// The same rewrite with the passthrough explicitly disabled has to land on the same table, so the
-// kill switch is a performance knob and never a correctness one.
-TEST_F(AppendCompactionInteTest, TestAppendTableCompactionDictionaryPassthroughDisabled) {
+// The same rewrite on a table that says nothing about the passthrough, which is the default and
+// the shape of every table that has not opted in. It has to land on the same rows as
+// TestAppendTableCompactionDictionaryPassthrough, so the option is a performance knob and never a
+// correctness one - and on a *better* encoded output, which is why it is not turned on by default.
+TEST_F(AppendCompactionInteTest, TestAppendTableCompactionDictionaryPassthroughDefaultOff) {
     auto dir = UniqueTestDirectory::Create();
     ASSERT_TRUE(dir);
     arrow::FieldVector fields = {arrow::field("id", arrow::int32()),
                                  arrow::field("s", arrow::utf8())};
     auto schema = arrow::schema(fields);
+    // No `parquet.read.enable-dictionary-passthrough` here on purpose: absence is what is under
+    // test. An explicit `false` reaches the same code, since the reader resolves the option
+    // against the same default.
     std::map<std::string, std::string> options = {
         {Options::FILE_FORMAT, "parquet"},
         {Options::BUCKET, "1"},
         {Options::BUCKET_KEY, "id"},
         {Options::FILE_SYSTEM, "local"},
-        {"parquet.read.enable-dictionary-passthrough", "false"},
     };
     ASSERT_OK_AND_ASSIGN(auto helper, TestHelper::Create(dir->Str(), schema, /*partition_keys=*/{},
                                                          /*primary_keys=*/{}, options,
@@ -1045,6 +1091,23 @@ TEST_F(AppendCompactionInteTest, TestAppendTableCompactionDictionaryPassthroughD
 
     ASSERT_OK_AND_ASSIGN(std::vector<std::shared_ptr<Split>> data_splits,
                          helper->NewScan(StartupMode::LatestFull(), /*snapshot_id=*/std::nullopt));
+    ASSERT_EQ(1, data_splits.size());
+    auto data_split = std::dynamic_pointer_cast<DataSplitImpl>(data_splits[0]);
+    ASSERT_TRUE(data_split);
+    ASSERT_EQ(1, data_split->DataFiles().size());
+
+    // The point of leaving the passthrough off: the writer built one dictionary covering the whole
+    // row group, so `s` is dictionary-encoded end to end and the gate accepts it - unlike the same
+    // rewrite with the passthrough on, which leaves the column partly plain. Read with the option
+    // on, since that is what makes the encoding visible; it does not change what is in the file.
+    std::map<std::string, std::string> passthrough_options = options;
+    passthrough_options["parquet.read.enable-dictionary-passthrough"] = "true";
+    std::shared_ptr<arrow::DataType> output_type;
+    ASSERT_NO_FATAL_FAILURE(ReadFirstBatchType(dir->GetFileSystem(), DataFilePath(data_split),
+                                               "parquet", passthrough_options, &output_type));
+    ASSERT_EQ(arrow::Type::DICTIONARY, output_type->field(1)->type()->id())
+        << "column s: " << output_type->field(1)->type()->ToString();
+
     arrow::FieldVector fields_with_row_kind = fields;
     fields_with_row_kind.insert(fields_with_row_kind.begin(),
                                 arrow::field("_VALUE_KIND", arrow::int8()));
@@ -1056,6 +1119,108 @@ TEST_F(AppendCompactionInteTest, TestAppendTableCompactionDictionaryPassthroughD
         [0, 4, "aa"],
         [0, 5, "dd"],
         [0, 6, "cc"]
+    ])"));
+    ASSERT_TRUE(success);
+}
+
+// The veto in GetDictionaryPassthroughVetoReason() that no other test reaches: a shredding writer
+// reshapes every batch against a fixed physical schema, so the rewrite forces the read option off
+// even though the table asks for it. The format veto is covered by the ORC parameter of
+// TestAppendTableCompactionDictionaryPassthrough; the `parquet.enable-dictionary` one is left
+// uncovered on purpose, since a writer with dictionaries disabled densifies whatever it is handed
+// and the rewritten file is identical either way.
+//
+// `s` is what makes this one visible: it reaches the rewrite dictionary-encoded - asserted on an
+// input file first, so the test cannot pass merely because there was nothing to forward - and comes
+// back dictionary-encoded end to end, which only a rewrite from materialized values produces. Had
+// the option been honoured it would have gone plain after the first input file's dictionary, the
+// way it does in TestAppendTableCompactionDictionaryPassthrough.
+TEST_F(AppendCompactionInteTest, TestAppendTableCompactionDictionaryPassthroughVetoedByShredding) {
+    auto dir = UniqueTestDirectory::Create();
+    ASSERT_TRUE(dir);
+    auto map_type = arrow::map(arrow::utf8(), arrow::int64());
+    arrow::FieldVector fields = {arrow::field("id", arrow::int32()),
+                                 arrow::field("s", arrow::utf8()), arrow::field("tags", map_type)};
+    auto schema = arrow::schema(fields);
+    std::map<std::string, std::string> options = {
+        {Options::FILE_FORMAT, "parquet"},
+        {Options::BUCKET, "1"},
+        {Options::BUCKET_KEY, "id"},
+        {Options::FILE_SYSTEM, "local"},
+        {"parquet.read.enable-dictionary-passthrough", "true"},
+        // The shredding plan, which is what makes the rewrite veto the option above.
+        {"fields.tags.map.storage-layout", "shared-shredding"},
+        {"fields.tags.map.shared-shredding.max-columns", "64"},
+    };
+    ASSERT_OK_AND_ASSIGN(auto helper, TestHelper::Create(dir->Str(), schema, /*partition_keys=*/{},
+                                                         /*primary_keys=*/{}, options,
+                                                         /*is_streaming_mode=*/true));
+
+    // Three files, each with its own `s` dictionary, which is what full compaction needs before it
+    // rewrites anything.
+    const std::vector<std::string> batches = {
+        R"([[1, "aa", [["a", 10]]], [2, "bb", [["b", 20]]]])",
+        R"([[3, "cc", [["a", 30]]], [4, "aa", null]])",
+        R"([[5, "dd", [["c", 40]]], [6, "cc", [["a", 50], ["d", 60]]]])",
+    };
+    int64_t commit_identifier = 0;
+    for (const std::string& data : batches) {
+        ASSERT_OK_AND_ASSIGN(std::unique_ptr<RecordBatch> batch,
+                             TestHelper::MakeRecordBatch(arrow::struct_(fields), data,
+                                                         /*partition_map=*/{}, /*bucket=*/0, {}));
+        ASSERT_OK(helper->WriteAndCommit(std::move(batch), commit_identifier++,
+                                         /*expected_commit_messages=*/std::nullopt));
+    }
+
+    {
+        // Without this the veto could not be told apart from an input the gate declines anyway.
+        ASSERT_OK_AND_ASSIGN(std::vector<std::shared_ptr<Split>> input_splits,
+                             helper->NewScan(StartupMode::LatestFull(),
+                                             /*snapshot_id=*/std::nullopt));
+        ASSERT_EQ(1, input_splits.size());
+        auto input_split = std::dynamic_pointer_cast<DataSplitImpl>(input_splits[0]);
+        ASSERT_TRUE(input_split);
+        ASSERT_EQ(3, input_split->DataFiles().size());
+        std::shared_ptr<arrow::DataType> input_type;
+        ASSERT_NO_FATAL_FAILURE(ReadFirstBatchType(dir->GetFileSystem(), DataFilePath(input_split),
+                                                   "parquet", options, &input_type));
+        ASSERT_EQ("s", input_type->field(1)->name());
+        ASSERT_EQ(arrow::Type::DICTIONARY, input_type->field(1)->type()->id())
+            << "column s: " << input_type->field(1)->type()->ToString();
+    }
+
+    ASSERT_OK(helper->write_->Compact(/*partition=*/{}, /*bucket=*/0, /*full_compaction=*/true));
+    ASSERT_OK_AND_ASSIGN(
+        std::vector<std::shared_ptr<CommitMessage>> commit_messages,
+        helper->write_->PrepareCommit(/*wait_compaction=*/true, commit_identifier));
+    ASSERT_FALSE(commit_messages.empty());
+    ASSERT_OK(helper->commit_->Commit(commit_messages, commit_identifier));
+
+    ASSERT_OK_AND_ASSIGN(std::vector<std::shared_ptr<Split>> data_splits,
+                         helper->NewScan(StartupMode::LatestFull(), /*snapshot_id=*/std::nullopt));
+    ASSERT_EQ(1, data_splits.size());
+    auto data_split = std::dynamic_pointer_cast<DataSplitImpl>(data_splits[0]);
+    ASSERT_TRUE(data_split);
+    ASSERT_EQ(1, data_split->DataFiles().size());
+
+    std::shared_ptr<arrow::DataType> output_type;
+    ASSERT_NO_FATAL_FAILURE(ReadFirstBatchType(dir->GetFileSystem(), DataFilePath(data_split),
+                                               "parquet", options, &output_type));
+    ASSERT_EQ("s", output_type->field(1)->name());
+    ASSERT_EQ(arrow::Type::DICTIONARY, output_type->field(1)->type()->id())
+        << "column s: " << output_type->field(1)->type()->ToString();
+
+    arrow::FieldVector fields_with_row_kind = fields;
+    fields_with_row_kind.insert(fields_with_row_kind.begin(),
+                                arrow::field("_VALUE_KIND", arrow::int8()));
+    ASSERT_OK_AND_ASSIGN(bool success, helper->ReadAndCheckResult(
+                                           arrow::struct_(fields_with_row_kind), data_splits, R"([
+        [0, 1, "aa", [["a", 10]]],
+        [0, 2, "bb", [["b", 20]]],
+        [0, 3, "cc", [["a", 30]]],
+        [0, 4, "aa", null],
+        [0, 5, "dd", [["c", 40]]],
+        [0, 6, "cc", [["a", 50], ["d", 60]]]
     ])"));
     ASSERT_TRUE(success);
 }

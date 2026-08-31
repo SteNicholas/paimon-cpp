@@ -856,6 +856,63 @@ TEST_F(ParquetFormatWriterTest, TestGetEstimateLengthWithDictionaryBatches) {
     ASSERT_GT(fs_->GetFileStatus(file_path).value().GetLen(), 0);
 }
 
+TEST_F(ParquetFormatWriterTest, TestWriteDictionaryOfBinaryColumn) {
+    // BINARY is the other value type an `ArrowArray` layout can describe, so the writer takes a
+    // `dictionary(int32, binary)` batch against a plain BINARY schema exactly as it takes a STRING
+    // one. ParquetFileBatchReader does not currently hand one over - it forwards STRING alone,
+    // because the value accessors cannot read a BINARY dictionary - so this pins the writer half
+    // of the contract on its own, and would fail if the layout predicate were narrowed to STRING
+    // to enforce the reader's restriction in the wrong place.
+    std::string file_path = PathUtil::JoinPath(dir_->Str(), "dictionary_binary");
+    arrow::FieldVector fields = {arrow::field("b", arrow::binary())};
+    ASSERT_OK_AND_ASSIGN(std::shared_ptr<OutputStream> out,
+                         fs_->Create(file_path, /*overwrite=*/true));
+    ::parquet::WriterProperties::Builder builder;
+    builder.enable_dictionary();
+    ASSERT_OK_AND_ASSIGN(
+        std::shared_ptr<ParquetFormatWriter> format_writer,
+        ParquetFormatWriter::Create(out, std::make_shared<arrow::Schema>(fields), builder.build(),
+                                    DEFAULT_PARQUET_WRITER_MAX_MEMORY_USE, arrow_pool_));
+
+    std::shared_ptr<arrow::Array> indices =
+        arrow::ipc::internal::json::ArrayFromJSON(arrow::int32(), "[0, 1, 0, 2]").ValueOrDie();
+    std::shared_ptr<arrow::Array> dictionary =
+        arrow::ipc::internal::json::ArrayFromJSON(arrow::binary(), R"(["a", "bb", "ccc"])")
+            .ValueOrDie();
+    std::shared_ptr<arrow::Array> encoded =
+        arrow::DictionaryArray::FromArrays(arrow::dictionary(arrow::int32(), arrow::binary()),
+                                           indices, dictionary)
+            .ValueOrDie();
+    auto batch_array =
+        arrow::StructArray::Make({encoded}, std::vector<std::string>{"b"}).ValueOrDie();
+    AddStructArrayOnce(format_writer, batch_array);
+
+    ASSERT_OK(format_writer->Flush());
+    ASSERT_OK(format_writer->Finish());
+    ASSERT_OK(out->Flush());
+    ASSERT_OK(out->Close());
+
+    auto file = arrow::io::ReadableFile::Open(file_path, arrow_pool_.get());
+    ASSERT_TRUE(file.ok());
+    std::unique_ptr<::parquet::arrow::FileReader> reader;
+    auto status = ::parquet::arrow::OpenFile(file.ValueOrDie(), arrow_pool_.get(), &reader);
+    ASSERT_TRUE(status.ok()) << status.ToString();
+    const ::parquet::FileMetaData* metadata = reader->parquet_reader()->metadata().get();
+    ASSERT_EQ(4, metadata->num_rows());
+    // The indices went to Parquet as indices: one dictionary, no plain fallback.
+    auto [dictionary_pages, data_pages] =
+        CountDictionaryDataPages(*metadata->RowGroup(0)->ColumnChunk(0));
+    ASSERT_GT(data_pages, 0);
+    ASSERT_EQ(data_pages, dictionary_pages);
+
+    std::shared_ptr<::arrow::ChunkedArray> column;
+    ASSERT_TRUE(reader->ReadColumn(0, &column).ok());
+    std::shared_ptr<arrow::Array> expected =
+        arrow::ipc::internal::json::ArrayFromJSON(arrow::binary(), R"(["a", "bb", "a", "ccc"])")
+            .ValueOrDie();
+    ASSERT_TRUE(column->Equals(arrow::ChunkedArray(expected))) << "actual=" << column->ToString();
+}
+
 TEST_F(ParquetFormatWriterTest, TestWriteDictionaryOfUnsupportedTypeIsRejected) {
     std::string file_path = PathUtil::JoinPath(dir_->Str(), "dictionary_unsupported");
     std::shared_ptr<OutputStream> out;

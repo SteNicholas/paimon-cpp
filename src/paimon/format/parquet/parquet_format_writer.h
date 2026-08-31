@@ -88,7 +88,7 @@ class ParquetFormatWriter : public FormatWriter {
     /// for the rest of the row group, so the values still round-trip but the output stops being
     /// dictionary-encoded there. Passing an encoding on therefore saves work on the way in, not
     /// necessarily on the way out.
-    Result<std::shared_ptr<arrow::Schema>> ResolveBatchSchema(const ::ArrowArray* batch);
+    Result<std::shared_ptr<arrow::Schema>> ResolveBatchSchema(const ::ArrowArray* batch) const;
 
     /// Flattens, per column, the dictionaries that Arrow's Parquet writer rejects outright, so
     /// one such column does not fail the whole batch. Currently only dictionaries holding nulls
@@ -102,10 +102,6 @@ class ParquetFormatWriter : public FormatWriter {
     std::shared_ptr<arrow::Schema> schema_;
     // Struct view of schema_, matched against the layout of each incoming batch.
     std::shared_ptr<arrow::DataType> logical_struct_type_;
-    // Last dictionary-encoded batch type and its schema, so a run of identically encoded batches
-    // builds the import schema only once.
-    std::shared_ptr<arrow::DataType> dictionary_batch_type_;
-    std::shared_ptr<arrow::Schema> dictionary_batch_schema_;
     std::shared_ptr<Metrics> metrics_;
     int64_t total_records_written_ = 0;
     uint64_t max_memory_use_;

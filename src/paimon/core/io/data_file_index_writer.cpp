@@ -27,7 +27,6 @@
 #include "arrow/c/bridge.h"
 #include "arrow/c/helpers.h"
 #include "arrow/compute/cast.h"
-#include "arrow/compute/exec.h"
 #include "fmt/format.h"
 #include "paimon/common/io/byte_array_output_stream.h"
 #include "paimon/common/io/memory_segment_output_stream.h"
@@ -36,6 +35,7 @@
 #include "paimon/common/utils/arrow/status_utils.h"
 #include "paimon/common/utils/path_util.h"
 #include "paimon/common/utils/scope_guard.h"
+#include "paimon/core/casting/casting_utils.h"
 #include "paimon/core/io/data_file_path_factory.h"
 #include "paimon/file_index/file_index_format.h"
 #include "paimon/file_index/file_index_writer.h"
@@ -104,9 +104,6 @@ Status DataFileIndexWriter::AddBatch(const std::shared_ptr<arrow::StructArray>& 
     if (finished_) {
         return Status::Invalid("Data file index writer has already finished");
     }
-    // Buffers allocated through the adaptor keep a raw pointer to it, so it has to outlive every
-    // array decoded below. Built on first use, since most batches decode nothing.
-    std::shared_ptr<arrow::MemoryPool> arrow_pool;
     // One entry per indexed column, not per index: a column carrying both a bitmap and a bloom
     // filter appears twice in `writers_` and would otherwise be materialized twice per batch.
     // Keyed by field index, which fixes the target type too - every entry for a column takes its
@@ -124,15 +121,13 @@ Status DataFileIndexWriter::AddBatch(const std::shared_ptr<arrow::StructArray>& 
             if (cached != decoded_columns.end()) {
                 column = cached->second;
             } else {
-                if (arrow_pool == nullptr) {
-                    arrow_pool = GetArrowPool(pool_);
+                if (arrow_pool_ == nullptr) {
+                    arrow_pool_ = GetArrowPool(pool_);
                 }
-                arrow::compute::ExecContext exec_context(arrow_pool.get());
-                PAIMON_ASSIGN_OR_RAISE_FROM_ARROW(
-                    arrow::Datum decoded,
-                    arrow::compute::Cast(column, entry.field->type(),
-                                         arrow::compute::CastOptions::Safe(), &exec_context));
-                column = decoded.make_array();
+                PAIMON_ASSIGN_OR_RAISE(
+                    column,
+                    CastingUtils::Cast(column, entry.field->type(),
+                                       arrow::compute::CastOptions::Safe(), arrow_pool_.get()));
                 decoded_columns.emplace(entry.field_index, column);
             }
         }

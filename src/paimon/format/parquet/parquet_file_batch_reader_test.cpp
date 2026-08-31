@@ -1815,14 +1815,51 @@ TEST_F(ParquetFileBatchReaderTest, TestDictionaryPassthrough) {
         ASSERT_EQ(arrow::Type::STRING, result.batch->field(1)->type()->id());
     }
     {
-        // Absent, which is how every read outside the compaction rewrite reaches this reader: the
-        // default has to be off, or an ordinary scan would start emitting dictionary batches at
-        // consumers that do not unwrap them.
+        // Absent, which is how this reader is reached on a table that never set the option -
+        // most of them. The default has to be off, or an ordinary scan would start emitting
+        // dictionary batches at consumers that do not unwrap them. A table that does set it gets
+        // them on every read, not only in the compaction rewrite.
         DictionaryPassthroughResult result =
             read_projection(/*enable_dictionary_passthrough=*/std::nullopt,
                             /*enable_dictionary_on_write=*/true);
         ASSERT_EQ(arrow::Type::STRING, result.batch->field(1)->type()->id());
     }
+}
+
+TEST_F(ParquetFileBatchReaderTest, TestDictionaryPassthroughSkipsBinaryColumn) {
+    // Parquet stores STRING and BINARY in the same BYTE_ARRAY leaf and dictionary-encodes both, so
+    // the gate has to exclude BINARY by logical type. It does, because nothing downstream can read
+    // `dictionary(int32, binary)`: ColumnarUtils::GetView() asserts on it and returns an empty view
+    // in a release build, and LiteralConverter rejects it. `f8` is the control - same physical
+    // type, same pages, and it is forwarded - so this fails if the exclusion is ever widened back.
+    WriteArray(file_path_, struct_array_, schema_,
+               /*write_batch_size=*/struct_array_->length(), /*enable_dictionary=*/true,
+               /*max_row_group_length=*/struct_array_->length());
+
+    ASSERT_OK_AND_ASSIGN(std::shared_ptr<InputStream> input_stream, fs_->Open(file_path_));
+    auto length = fs_->GetFileStatus(file_path_).value().GetLen();
+    auto in_stream =
+        std::make_unique<ArrowInputStreamAdapter>(std::move(input_stream), length, pool_);
+    std::map<std::string, std::string> options;
+    options[PARQUET_READ_ENABLE_DICTIONARY_PASSTHROUGH] = "true";
+    auto read_schema =
+        MakeReadSchema({arrow::field("f8", arrow::utf8()), arrow::field("f9", arrow::binary())});
+    auto reader = PrepareParquetFileBatchReader(std::move(in_stream), options, read_schema,
+                                                /*predicate=*/nullptr,
+                                                /*selection_bitmap=*/std::nullopt, batch_size_);
+
+    ASSERT_OK_AND_ASSIGN(BatchReader::ReadBatch batch, reader->NextBatch());
+    ASSERT_FALSE(BatchReader::IsEofBatch(batch));
+    auto& [c_array, c_schema] = batch;
+    auto read_array = checked_pointer_cast<arrow::StructArray>(
+        arrow::ImportArray(c_array.get(), c_schema.get()).ValueOrDie());
+    ASSERT_EQ(arrow::Type::DICTIONARY, read_array->field(0)->type()->id())
+        << read_array->field(0)->type()->ToString();
+    ASSERT_EQ(arrow::Type::BINARY, read_array->field(1)->type()->id())
+        << read_array->field(1)->type()->ToString();
+    // Materialized, and still the bytes the file holds.
+    ASSERT_EQ("a31", checked_pointer_cast<arrow::BinaryArray>(read_array->field(1))->GetString(0));
+    reader->Close();
 }
 
 TEST_F(ParquetFileBatchReaderTest, TestDictionaryPassthroughSkipsFallbackToPlain) {

@@ -181,21 +181,30 @@ TEST_F(DataFileIndexWriterTest, TestDictionaryEncodedIndexedColumnRoundTrip) {
                          CreateWriter({{"file-index.bitmap.columns", "f0"},
                                        {Options::FILE_INDEX_IN_MANIFEST_THRESHOLD, "1MB"}}));
 
-    std::shared_ptr<arrow::Array> indices =
-        arrow::ipc::internal::json::ArrayFromJSON(arrow::int32(), "[0, 1, 0, 2]").ValueOrDie();
-    std::shared_ptr<arrow::Array> dictionary =
-        arrow::ipc::internal::json::ArrayFromJSON(arrow::utf8(), R"(["a", "b", "c"])").ValueOrDie();
-    std::shared_ptr<arrow::Array> encoded =
-        arrow::DictionaryArray::FromArrays(arrow::dictionary(arrow::int32(), arrow::utf8()),
-                                           indices, dictionary)
-            .ValueOrDie();
-    std::shared_ptr<arrow::Array> values =
-        arrow::ipc::internal::json::ArrayFromJSON(arrow::int32(), "[10, 20, 30, 40]").ValueOrDie();
-    auto batch = checked_pointer_cast<arrow::StructArray>(
-        arrow::StructArray::Make({encoded, values}, std::vector<std::string>{"f0", "f1"})
-            .ValueOrDie());
+    auto encoded_batch = [](const std::string& indices_json, const std::string& dictionary_json,
+                            const std::string& ints_json) {
+        std::shared_ptr<arrow::Array> indices =
+            arrow::ipc::internal::json::ArrayFromJSON(arrow::int32(), indices_json).ValueOrDie();
+        std::shared_ptr<arrow::Array> dictionary =
+            arrow::ipc::internal::json::ArrayFromJSON(arrow::utf8(), dictionary_json).ValueOrDie();
+        std::shared_ptr<arrow::Array> encoded =
+            arrow::DictionaryArray::FromArrays(arrow::dictionary(arrow::int32(), arrow::utf8()),
+                                               indices, dictionary)
+                .ValueOrDie();
+        std::shared_ptr<arrow::Array> values =
+            arrow::ipc::internal::json::ArrayFromJSON(arrow::int32(), ints_json).ValueOrDie();
+        return checked_pointer_cast<arrow::StructArray>(
+            arrow::StructArray::Make({encoded, values}, std::vector<std::string>{"f0", "f1"})
+                .ValueOrDie());
+    };
 
-    ASSERT_OK(writer->AddBatch(batch));
+    // Two batches with different dictionaries, which is what a rewrite of several input files
+    // hands over: each has to be decoded against its own alphabet, and the pool those decoded
+    // columns come from outlives the call that built it.
+    ASSERT_OK(
+        writer->AddBatch(encoded_batch("[0, 1, 0, 2]", R"(["a", "b", "c"])", "[10, 20, 30, 40]")));
+    ASSERT_OK(writer->AddBatch(encoded_batch("[1, 0]", R"(["b", "d"])", "[50, 60]")));
+
     ASSERT_OK_AND_ASSIGN(FileIndexWriteResult result, writer->Finish("unused.orc"));
     ASSERT_TRUE(result.embedded_index);
     ASSERT_OK_AND_ASSIGN(auto reader, CreateReader(result.embedded_index));
@@ -205,9 +214,14 @@ TEST_F(DataFileIndexWriterTest, TestDictionaryEncodedIndexedColumnRoundTrip) {
     ASSERT_OK_AND_ASSIGN(auto equal_result,
                          bitmap_readers[0]->VisitEqual(Literal(FieldType::STRING, "a", 1)));
     ASSERT_EQ("{0,2}", equal_result->ToString());
-    ASSERT_OK_AND_ASSIGN(auto single_row_result,
+    // Row 1 comes from the first dictionary and row 5 from the second, so a decode that reused the
+    // wrong alphabet would land somewhere else.
+    ASSERT_OK_AND_ASSIGN(auto shared_value_result,
                          bitmap_readers[0]->VisitEqual(Literal(FieldType::STRING, "b", 1)));
-    ASSERT_EQ("{1}", single_row_result->ToString());
+    ASSERT_EQ("{1,5}", shared_value_result->ToString());
+    ASSERT_OK_AND_ASSIGN(auto second_batch_result,
+                         bitmap_readers[0]->VisitEqual(Literal(FieldType::STRING, "d", 1)));
+    ASSERT_EQ("{4}", second_batch_result->ToString());
 }
 
 TEST_F(DataFileIndexWriterTest, TestExternalIndexAndAbortCleanup) {
