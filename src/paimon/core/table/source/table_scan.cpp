@@ -397,8 +397,6 @@ Result<std::unique_ptr<TableScan>> NewDataTableScan(
         PAIMON_RETURN_NOT_OK(PredicateValidator::ValidatePredicateWithSchema(
             *arrow_schema, context->GetScanFilters()->GetPredicate(),
             /*validate_field_idx=*/false));
-        PAIMON_RETURN_NOT_OK(PredicateValidator::ValidatePredicateWithLiterals(
-            context->GetScanFilters()->GetPredicate()));
     }
     PAIMON_ASSIGN_OR_RAISE(std::vector<std::string> external_paths,
                            core_options.CreateExternalPaths());
