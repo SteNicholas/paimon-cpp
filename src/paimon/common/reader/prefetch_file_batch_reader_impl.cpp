@@ -215,6 +215,9 @@ Result<std::unique_ptr<PrefetchFileBatchReaderImpl>> PrefetchFileBatchReaderImpl
     if (batch_size <= 0) {
         return Status::Invalid("batch size should be greater than 0.");
     }
+    if (data_file_size < 0) {
+        return Status::Invalid("data file size should not be negative.");
+    }
     if (reader_builder == nullptr) {
         return Status::Invalid("reader_builder should not be nullptr.");
     }
@@ -236,7 +239,11 @@ Result<std::unique_ptr<PrefetchFileBatchReaderImpl>> PrefetchFileBatchReaderImpl
         if (io_metrics) {
             input_stream = std::make_shared<MetricsInputStream>(input_stream, io_metrics);
         }
-        cache = std::make_shared<ReadAheadCache>(input_stream, cache_config, pool);
+        // The file size lets the cache align its blocks to the end of the file,
+        // where the metadata the readers read before any range is registered
+        // lives. A zero size means unknown and disables the block cache.
+        cache = std::make_shared<ReadAheadCache>(input_stream, cache_config,
+                                                 static_cast<uint64_t>(data_file_size), pool);
     }
     std::vector<std::future<Result<std::unique_ptr<FileBatchReader>>>> futures;
     for (uint32_t i = 0; i < prefetch_max_parallel_num; i++) {
