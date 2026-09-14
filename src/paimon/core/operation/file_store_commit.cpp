@@ -113,8 +113,10 @@ Result<std::shared_ptr<SnapshotCommit>> NewSnapshotCommit(
     const CommitContext& ctx, const std::shared_ptr<FileSystem>& fs,
     const std::shared_ptr<SnapshotManager>& snapshot_manager) {
     if (IsCatalogCommit(ctx)) {
+        if (!ctx.GetIdentifier()) {
+            return Status::Invalid("a catalog commit requires a table identifier");
+        }
         // Reuse the caller's UUID so table recreation cannot redirect this commit.
-        assert(ctx.GetIdentifier());
         return std::shared_ptr<SnapshotCommit>(std::make_shared<CatalogSnapshotCommit>(
             ctx.GetCatalog(), ctx.GetIdentifier().value(), ctx.GetTableId()));
     }
@@ -198,7 +200,9 @@ Result<std::unique_ptr<FileStoreCommit>> FileStoreCommit::Create(
     std::optional<std::string> catalog_table_schema;
     FileStoreCommitImpl::SchemaIdLoader schema_id_loader;
     if (ctx->GetCatalog() != nullptr) {
-        assert(ctx->GetIdentifier());
+        if (!ctx->GetIdentifier()) {
+            return Status::Invalid("a catalog commit requires a table identifier");
+        }
         PAIMON_ASSIGN_OR_RAISE(std::shared_ptr<Schema> loaded_schema,
                                ctx->GetCatalog()->LoadTableSchema(ctx->GetIdentifier().value()));
         PAIMON_ASSIGN_OR_RAISE(std::string schema_json, loaded_schema->GetJsonSchema());
