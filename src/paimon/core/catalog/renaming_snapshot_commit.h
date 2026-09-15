@@ -26,6 +26,7 @@
 
 #include "paimon/core/catalog/snapshot_commit.h"
 #include "paimon/core/snapshot.h"
+#include "paimon/core/utils/branch_manager.h"
 #include "paimon/core/utils/snapshot_manager.h"
 #include "paimon/fs/file_system.h"
 #include "paimon/result.h"
@@ -47,10 +48,17 @@ class RenamingSnapshotCommit : public SnapshotCommit {
 
     /// @note The atomic rename detects conflicts by snapshot ID, so `base_snapshot_uuid` is unused.
     Result<bool> Commit(const std::optional<std::string>& base_snapshot_uuid,
-                        const Snapshot& snapshot,
+                        const Snapshot& snapshot, const std::string& branch,
                         const std::vector<PartitionStatistics>& statistics) override {
         PAIMON_ASSIGN_OR_RAISE(std::string json_str, snapshot.ToJsonString());
-        std::string snapshot_path = snapshot_manager_->SnapshotPath(snapshot.Id());
+        // The snapshot directory belongs to a branch, so a commit aimed at another one writes
+        // through a manager of that branch.
+        std::shared_ptr<SnapshotManager> snapshot_manager = snapshot_manager_;
+        if (BranchManager::NormalizeBranch(branch) != snapshot_manager_->Branch()) {
+            snapshot_manager = std::make_shared<SnapshotManager>(
+                snapshot_manager_->Fs(), snapshot_manager_->RootPath(), branch);
+        }
+        std::string snapshot_path = snapshot_manager->SnapshotPath(snapshot.Id());
         PAIMON_ASSIGN_OR_RAISE(bool is_exist, fs_->Exists(snapshot_path));
         if (is_exist) {
             return false;
@@ -63,7 +71,7 @@ class RenamingSnapshotCommit : public SnapshotCommit {
         // as it may delete meta files from a snapshot that was just written by ourselves,
         // leading to an incomplete or corrupted snapshot.
         PAIMON_RETURN_NOT_OK(fs_->AtomicStore(snapshot_path, json_str));
-        PAIMON_RETURN_NOT_OK(snapshot_manager_->CommitLatestHint(snapshot.Id()));
+        PAIMON_RETURN_NOT_OK(snapshot_manager->CommitLatestHint(snapshot.Id()));
         return true;
     }
 

@@ -180,11 +180,8 @@ Its metadata files are retained. Use ``FilterAndCommit`` for batch recovery;
 after a real-time error, recreate the writer and context and recover from durable
 offsets as described by ``CommitWithProgress``.
 
-Only the main branch is supported by ``WithCatalog``. Both builders reject other
-branches in the identifier or ``branch`` option; the write builder also checks
-``WithBranch``. Explicit ``tbl$branch_main`` and ``branch=main`` are accepted.
-
-The current schema and latest snapshot need no files under the table path.
+The main branch's current schema and latest snapshot need no files under the table
+path; a branch keeps both under its own directory, as described below.
 A catalog response of ``{"snapshot": null}`` means the table has no snapshot.
 Only a catalog reporting that snapshot loading is unsupported falls back to
 file-system lookup; other catalog errors propagate to the caller.
@@ -193,7 +190,8 @@ Read ``Table::CatalogUuid()`` before preparing changes and pass it to
 ``WithTableId`` so the server can reject commits to a dropped and recreated table.
 ``Table::Uuid()`` can fall back to the table name and must not supply this id.
 An unset table id is sent as null and subject to server validation. Each commit
-attempt reloads the catalog's current schema id for the new snapshot.
+attempt to the main branch reloads the catalog's current schema id for the new
+snapshot; on a branch it reloads the id published under the branch.
 
 .. note::
 
@@ -224,7 +222,73 @@ restored by ``RollbackToAsLatest``. Serialize rollback and expiration through
 the upstream coordinator: a rollback must finish before expiration starts,
 so its restored file references are visible to the expiration operation.
 
+.. warning::
+
+   Expiration reads the retained snapshots of the branch it runs on and of no
+   other, while data files are shared by every branch of the table, so a file
+   that only another branch still refers to is not preserved by that reference
+   and is deleted. This holds for the main branch as much as for the others:
+   expiring the main branch deletes a file only a branch refers to. Expire only
+   where the retained snapshots of the branch cover every file the other branches
+   still read, or keep those files reachable from the expiring branch through the
+   upstream coordinator.
+
 The C++ REST catalog covers the database, table, snapshot and commit operations
 of the ``Catalog`` API. The parts of the Java REST catalog that have no C++
 counterpart yet — altering a database or a table, views, functions, partitions,
-tags, branch management and consumers — are not supported.
+tags, branch management and consumers — are not supported. Creating, deleting
+and merging a branch is what branch management covers; committing to a branch
+that already exists is supported, as described below.
+
+Committing to a branch
+~~~~~~~~~~~~~~~~~~~~~~
+This library creates no branch: one has to exist, with its schema published under
+``branch/branch-<name>``, before a write or a commit can be aimed at it.
+
+Naming the branch
+^^^^^^^^^^^^^^^^^
+A branch is addressed by the identifier of ``WithCatalog``, which
+``paimon::Identifier("db", "tbl", "dev")`` builds as ``tbl$branch_dev``, so that
+the catalog answers for the branch: the snapshot it loads is the branch's, and
+the commit request is addressed to that branch by that identifier rather than by
+anything in its body. The ``branch`` option and, for writers, ``WithBranch`` may
+name the same branch as well; naming two different branches is rejected rather
+than resolved, and ``tbl$branch_main``, ``branch=main`` and an empty name all
+mean the main branch. Naming a branch only in the option or ``WithBranch`` while
+the identifier names the bare table is rejected, as the catalog would then answer
+for the table while the files were written for the branch.
+
+Names a catalog cannot tell apart from another object are rejected where a
+builder sees them: a name differing from ``main`` by case alone, such as
+``tbl$branch_MAIN`` or ``branch=MAIN``, which a catalog reads as the main branch
+while its snapshots go to a directory of their own; and a name holding a ``$``,
+such as ``branch=dev$options``, which ``tbl$branch_dev$options`` reads back as
+the ``options`` system table of branch ``dev``. ``paimon::Identifier("db",
+"tbl", "MAIN")`` never reaches that check: the constructor folds every spelling
+of ``main`` into the bare table name, as the Java client does, and so names the
+main branch.
+
+What a branch keeps and what it shares
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+A branch other than the main one keeps its schema, snapshots and real-time
+offsets under ``branch/branch-<name>``; the main branch keeps them under the
+table path. Data and manifests are shared by all branches under the table path,
+which is what the expiration warning above turns on.
+
+A write or a commit aimed at a branch reads that schema rather than the
+catalog's, just as a read of that branch does, and asks the catalog for no schema
+at all, so a catalog serving only the table's own current schema still takes the
+branch's snapshots. The new snapshot records the schema id published there as
+well, which is the id a read of the branch resolves under
+``branch/branch-<name>``; only on the main branch is the recorded id the one the
+catalog reports, as its current schema may live nowhere else. Data files record
+the schema they were written with, as they do on the main branch.
+
+Addressing a branch without a catalog client
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``UseRESTCatalogCommit`` builds the request instead of sending it, and takes the
+branch from the ``branch`` option alone, as it is configured without an
+identifier. The request body carries the table id but no table name and no
+branch, so the branch has to appear in the URL the caller sends that body to:
+the commit endpoint of ``tbl$branch_dev``, not the one of ``tbl``. A body sent
+to the bare table's URL publishes the branch's snapshot on the main branch.
