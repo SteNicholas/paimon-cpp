@@ -60,10 +60,10 @@ TEST(RenamingSnapshotCommitTest, TestCommitToBranch) {
     auto fs = std::make_shared<LocalFileSystem>();
     auto dir = UniqueTestDirectory::Create();
     ASSERT_TRUE(dir);
-    auto snapshot_manager = std::make_shared<SnapshotManager>(fs, dir->Str());
-
-    auto commit = std::make_shared<RenamingSnapshotCommit>(fs, snapshot_manager);
+    auto commit = std::make_shared<RenamingSnapshotCommit>(
+        fs, std::make_shared<SnapshotManager>(fs, dir->Str(), "dev"));
     Snapshot snapshot = BuildTestSnapshot(1);
+
     ASSERT_OK_AND_ASSIGN(bool success, commit->Commit(std::nullopt, snapshot, "dev", {}));
     ASSERT_TRUE(success);
     const std::string branch_dir = PathUtil::JoinPath(dir->Str(), "branch/branch-dev/snapshot");
@@ -71,23 +71,39 @@ TEST(RenamingSnapshotCommitTest, TestCommitToBranch) {
     ASSERT_TRUE(exist);
     ASSERT_OK_AND_ASSIGN(bool hint_exist, fs->Exists(PathUtil::JoinPath(branch_dir, "LATEST")));
     ASSERT_TRUE(hint_exist);
-    ASSERT_OK_AND_ASSIGN(bool main_exist,
-                         fs->Exists(PathUtil::JoinPath(dir->Str(), "snapshot/snapshot-1")));
-    ASSERT_FALSE(main_exist);
-
-    auto branch_snapshot_manager = std::make_shared<SnapshotManager>(fs, dir->Str(), "dev");
-    auto branch_commit = std::make_shared<RenamingSnapshotCommit>(fs, branch_snapshot_manager);
-    ASSERT_OK_AND_ASSIGN(bool duplicate, branch_commit->Commit(std::nullopt, snapshot, "dev", {}));
+    ASSERT_OK_AND_ASSIGN(bool main_snapshot_dir_exists,
+                         fs->Exists(PathUtil::JoinPath(dir->Str(), "snapshot")));
+    ASSERT_FALSE(main_snapshot_dir_exists);
+    ASSERT_OK_AND_ASSIGN(bool duplicate, commit->Commit(std::nullopt, snapshot, "dev", {}));
     ASSERT_FALSE(duplicate);
-    ASSERT_OK_AND_ASSIGN(bool next, branch_commit->Commit(std::nullopt, BuildTestSnapshot(2),
-                                                          BranchManager::DEFAULT_MAIN_BRANCH, {}));
-    ASSERT_TRUE(next);
-    ASSERT_OK_AND_ASSIGN(bool main_next,
-                         fs->Exists(PathUtil::JoinPath(dir->Str(), "snapshot/snapshot-2")));
-    ASSERT_TRUE(main_next);
-    ASSERT_OK_AND_ASSIGN(bool main_hint,
-                         fs->Exists(PathUtil::JoinPath(dir->Str(), "snapshot/LATEST")));
-    ASSERT_TRUE(main_hint);
+}
+
+TEST(RenamingSnapshotCommitTest, TestBranchHasToMatchSnapshotManager) {
+    auto fs = std::make_shared<LocalFileSystem>();
+    auto dir = UniqueTestDirectory::Create();
+    ASSERT_TRUE(dir);
+    auto main_commit = std::make_shared<RenamingSnapshotCommit>(
+        fs, std::make_shared<SnapshotManager>(fs, dir->Str()));
+    auto branch_commit = std::make_shared<RenamingSnapshotCommit>(
+        fs, std::make_shared<SnapshotManager>(fs, dir->Str(), "dev"));
+    Snapshot snapshot = BuildTestSnapshot(1);
+
+    ASSERT_NOK_WITH_MSG(main_commit->Commit(std::nullopt, snapshot, "dev", {}),
+                        "renaming snapshot commit built for branch 'main' cannot commit snapshot "
+                        "#1 to branch 'dev'");
+    ASSERT_NOK_WITH_MSG(
+        branch_commit->Commit(std::nullopt, snapshot, BranchManager::DEFAULT_MAIN_BRANCH, {}),
+        "renaming snapshot commit built for branch 'dev' cannot commit snapshot #1 to branch "
+        "'main'");
+    ASSERT_OK_AND_ASSIGN(bool branch_dir_exists,
+                         fs->Exists(PathUtil::JoinPath(dir->Str(), "branch")));
+    ASSERT_FALSE(branch_dir_exists);
+    ASSERT_OK_AND_ASSIGN(bool main_snapshot_dir_exists,
+                         fs->Exists(PathUtil::JoinPath(dir->Str(), "snapshot")));
+    ASSERT_FALSE(main_snapshot_dir_exists);
+
+    ASSERT_OK_AND_ASSIGN(bool main_success, main_commit->Commit(std::nullopt, snapshot, "", {}));
+    ASSERT_TRUE(main_success);
 }
 
 }  // namespace paimon::test

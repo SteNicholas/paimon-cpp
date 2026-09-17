@@ -1975,7 +1975,7 @@ TEST_F(PkCompactionInteTest, WriteAndCompactWithBranch) {
                          fs->Exists(PathUtil::JoinPath(table_path, "snapshot/snapshot-2")));
     ASSERT_FALSE(main_snapshot_exists);
 
-    // Step 5: Scan branch-rt and read the compacted file.
+    // Step 5: Scan and read branch-rt.
     std::map<std::string, std::string> branch_options = {{Options::FILE_SYSTEM, "local"},
                                                          {Options::BRANCH, "rt"}};
     ScanContextBuilder scan_context_builder(table_path);
@@ -1987,19 +1987,13 @@ TEST_F(PkCompactionInteTest, WriteAndCompactWithBranch) {
                          TableScan::Create(std::move(scan_context)));
     ASSERT_OK_AND_ASSIGN(std::shared_ptr<Plan> plan, table_scan->CreatePlan());
 
-    std::vector<std::shared_ptr<Split>> compacted_splits;
-    for (const std::shared_ptr<Split>& split : plan->Splits()) {
+    std::vector<std::shared_ptr<Split>> splits = plan->Splits();
+    ASSERT_FALSE(splits.empty());
+    for (const std::shared_ptr<Split>& split : splits) {
         auto* split_impl = dynamic_cast<DataSplitImpl*>(split.get());
         ASSERT_NE(split_impl, nullptr);
-        for (const std::shared_ptr<DataFileMeta>& file : split_impl->DataFiles()) {
-            if (file->file_name == compact_after[0]->file_name) {
-                ASSERT_EQ(split_impl->SnapshotId(), 3);
-                compacted_splits.push_back(split);
-                break;
-            }
-        }
+        ASSERT_EQ(split_impl->SnapshotId(), 3);
     }
-    ASSERT_EQ(compacted_splits.size(), 1u);
 
     ReadContextBuilder read_context_builder(table_path);
     read_context_builder.SetOptions(branch_options);
@@ -2007,9 +2001,10 @@ TEST_F(PkCompactionInteTest, WriteAndCompactWithBranch) {
     ASSERT_OK_AND_ASSIGN(std::unique_ptr<TableRead> table_read,
                          TableRead::Create(std::move(read_context)));
     ASSERT_OK_AND_ASSIGN(std::unique_ptr<BatchReader> batch_reader,
-                         table_read->CreateReader(compacted_splits));
+                         table_read->CreateReader(splits));
     ASSERT_OK_AND_ASSIGN(std::shared_ptr<arrow::ChunkedArray> result_array,
                          ReadResultCollector::CollectResult(std::move(batch_reader)));
+    ASSERT_TRUE(result_array);
 
     arrow::FieldVector fields_with_row_kind = fields;
     fields_with_row_kind.insert(fields_with_row_kind.begin(),
@@ -2018,12 +2013,18 @@ TEST_F(PkCompactionInteTest, WriteAndCompactWithBranch) {
 
     std::shared_ptr<arrow::ChunkedArray> expected_array;
     auto status = arrow::ipc::internal::json::ChunkedArrayFromJSON(result_type, {R"([
+[0, "20240725", "apple", 4],
+[0, "20240725", "peach", 10],
 [0, "20240726", "cherry", 30],
-[0, "20240726", "grape", 40]
+[0, "20240726", "grape", 40],
+[0, "20240726", "pear", 6]
 ])"},
                                                                    &expected_array);
     ASSERT_TRUE(status.ok());
-    ASSERT_TRUE(result_array);
+    auto result_schema = std::make_shared<arrow::Schema>(fields_with_row_kind);
+    ASSERT_OK_AND_ASSIGN(expected_array,
+                         ReadResultCollector::SortArray(expected_array, result_schema));
+    ASSERT_OK_AND_ASSIGN(result_array, ReadResultCollector::SortArray(result_array, result_schema));
     ASSERT_TRUE(result_array->Equals(*expected_array)) << result_array->ToString();
 }
 

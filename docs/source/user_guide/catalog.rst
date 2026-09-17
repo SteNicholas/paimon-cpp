@@ -181,7 +181,8 @@ after a real-time error, recreate the writer and context and recover from durabl
 offsets as described by ``CommitWithProgress``.
 
 The main branch's current schema and latest snapshot need no files under the table
-path; a branch keeps both under its own directory, as described below.
+path. A branch needs its schema published under its own directory, while its
+latest snapshot can be held by the catalog alone, as described below.
 A catalog response of ``{"snapshot": null}`` means the table has no snapshot.
 Only a catalog reporting that snapshot loading is unsupported falls back to
 file-system lookup; other catalog errors propagate to the caller.
@@ -224,14 +225,14 @@ so its restored file references are visible to the expiration operation.
 
 .. warning::
 
-   Expiration reads the retained snapshots of the branch it runs on and of no
-   other, while data files are shared by every branch of the table, so a file
-   that only another branch still refers to is not preserved by that reference
-   and is deleted. This holds for the main branch as much as for the others:
-   expiring the main branch deletes a file only a branch refers to. Expire only
-   where the retained snapshots of the branch cover every file the other branches
-   still read, or keep those files reachable from the expiring branch through the
-   upstream coordinator.
+   ``Expire`` returns ``NotImplemented`` before reading any snapshot or deleting
+   any file when it runs on a branch other than main, or finds one under
+   ``branch/branch-<name>`` of the table path. Data files are shared by every
+   branch of the table, while expiration reads only the retained snapshots of the
+   branch it runs on, so it could delete a file another branch still refers to.
+   A branch the catalog holds without that directory, or one created while
+   expiration runs, is not found: do not expire a table with such a branch, and
+   serialize branch creation and expiration through the upstream coordinator.
 
 The C++ REST catalog covers the database, table, snapshot and commit operations
 of the ``Catalog`` API. The parts of the Java REST catalog that have no C++
@@ -270,10 +271,13 @@ main branch.
 
 What a branch keeps and what it shares
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-A branch other than the main one keeps its schema, snapshots and real-time
-offsets under ``branch/branch-<name>``; the main branch keeps them under the
-table path. Data and manifests are shared by all branches under the table path,
-which is what the expiration warning above turns on.
+A branch other than the main one publishes its schema and real-time offsets
+under ``branch/branch-<name>``, where a snapshot written to the file system goes
+as well; the main branch keeps these files under the table path. A
+version-managed catalog can hold the latest snapshot of either branch alone.
+Data and manifests are shared by all branches under the table path,
+which is why expiration is not supported on a table with branches, as noted
+above.
 
 A write or a commit aimed at a branch reads that schema rather than the
 catalog's, just as a read of that branch does, and asks the catalog for no schema

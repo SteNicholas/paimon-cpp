@@ -181,9 +181,12 @@ class PAIMON_EXPORT FileStoreCommit {
     /// catalog or retained-metadata read errors propagate without deleting files.
     /// Retained snapshots with index manifests return `NotImplemented` before deletion.
     /// @note Coordinate rollback and expiration so they do not run concurrently.
-    /// @note Only the retained snapshots of the branch this commit was built for are read, while
-    ///       the branches of a table share their data files, so a file that only another branch
-    ///       still refers to is deleted. This holds for the main branch as much as for the others.
+    /// @note Returns `NotImplemented` before any snapshot is read or any file is deleted when this
+    ///       commit is on a branch other than main, or the table path holds such a branch under
+    ///       `branch/branch-<name>`: branches share the table's data files, while expiration only
+    ///       reads the retained snapshots of its own branch. A branch held only by a catalog, or
+    ///       created while expiration runs, is not found; do not expire a table with such a
+    ///       branch, and serialize branch creation and expiration.
     /// @return Result<int32_t> indicating the number of expired items or an error status.
     virtual Result<int32_t> Expire() = 0;
 
