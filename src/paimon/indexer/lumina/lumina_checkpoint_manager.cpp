@@ -16,13 +16,13 @@
  * limitations under the License.
  */
 
-#include "paimon/global_index/lumina/lumina_checkpoint_manager.h"
+#include "paimon/indexer/lumina/lumina_checkpoint_manager.h"
 
 #include <utility>
 
-#include "paimon/global_index/lumina/lumina_file_reader.h"
-#include "paimon/global_index/lumina/lumina_file_writer.h"
-#include "paimon/global_index/lumina/lumina_utils.h"
+#include "paimon/indexer/lumina/lumina_file_reader.h"
+#include "paimon/indexer/lumina/lumina_file_writer.h"
+#include "paimon/indexer/lumina/lumina_utils.h"
 
 namespace paimon::lumina {
 

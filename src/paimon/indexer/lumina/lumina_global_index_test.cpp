@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "paimon/global_index/lumina/lumina_global_index.h"
+#include "paimon/indexer/lumina/lumina_global_index.h"
 
 #include <random>
 #include <thread>
@@ -38,8 +38,8 @@
 #include "paimon/fs/local/local_file_system.h"
 #include "paimon/global_index/bitmap_scored_global_index_result.h"
 #include "paimon/global_index/global_index_result.h"
-#include "paimon/global_index/lumina/lumina_checkpoint_manager.h"
-#include "paimon/global_index/lumina/lumina_memory_pool.h"
+#include "paimon/indexer/lumina/lumina_checkpoint_manager.h"
+#include "paimon/indexer/lumina/lumina_memory_pool.h"
 #include "paimon/predicate/predicate_builder.h"
 #include "paimon/testing/utils/testharness.h"
 namespace paimon::lumina::test {
