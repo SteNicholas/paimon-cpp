@@ -168,6 +168,14 @@ index shard, the engine ranks matching rows by BM25 score and returns at most ``
 the highest scores. ``include_row_ids`` holds global row ids and restricts the rows that are
 ranked; an empty set matches no rows.
 
+When ``deletion-vectors.enabled`` and ``row-tracking.enabled`` are set, readers created by
+``GlobalIndexScan`` rank only the rows that are live in the snapshot the scan reads, as Java Paimon
+does, so rows deleted by deletion vectors do not take ``limit`` slots. Each index shard ranks only
+the live rows of its range, and a shard without deleted rows gets no extra filter. BM25 statistics
+still come from the whole index. Read the matched rows from the same snapshot, for example with
+``scan.mode`` set to ``from-snapshot`` and ``scan.snapshot-id``: a later snapshot can delete some
+of them.
+
 For both ``full-text`` and ``lucene-fts``, searches across multiple shards currently return the
 union of the shard candidates, which can exceed ``limit``. Applying a final global top-k is tracked
 in `issue #402 <https://github.com/apache/paimon-cpp/issues/402>`_.
