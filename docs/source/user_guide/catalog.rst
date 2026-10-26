@@ -67,8 +67,11 @@ registered on the REST server. The catalog is configured through the
   the role from the metadata endpoint when it is omitted.
 * ``dlf.signing-algorithm``: ``default`` selects DLF4-HMAC-SHA256 for DLF VPC
   endpoints and ``openapi`` selects ROA HMAC-SHA1 for DlfNext OpenAPI endpoints.
-  When omitted, an endpoint containing ``dlfnext`` selects ``openapi`` and other
-  endpoints select ``default``.
+  ``openapi-v4`` selects ACS4-HMAC-SHA256 for DlfNext OpenAPI endpoints. When a
+  request matches a registered DlfNext operation, it also names that operation's
+  API in the ``x-acs-action`` header; other requests are signed without it.
+  Without this option, an endpoint containing ``dlfnext`` selects ``openapi`` and
+  other endpoints select ``default``; ``openapi-v4`` is only used when configured.
 * ``table-default.<key>``: table option defaults applied when a created table
   left ``<key>`` unset.
 * ``header.<name>``: sent as the ``<name>`` http header on every request to the
@@ -103,6 +106,8 @@ are reloaded when less than one hour of validity remains.
        {"dlf.access-key-secret", "<access-key-secret>"},
        // Optional for temporary credentials:
        {"dlf.security-token", "<security-token>"},
+       // Optional for endpoints that require ACS4-HMAC-SHA256 signing:
+       {"dlf.signing-algorithm", "openapi-v4"},
    };
 
 On creation the catalog queries the server's ``/v1/config`` endpoint and merges
