@@ -107,6 +107,8 @@ TEST(CoreOptionsTest, TestDefaultValue) {
     ASSERT_EQ(10, core_options.GetCommitMinRetryWait());
     ASSERT_EQ(10 * 1000, core_options.GetCommitMaxRetryWait());
     ASSERT_FALSE(core_options.CommitDiscardDuplicateFiles());
+    ASSERT_FALSE(core_options.RestCommitLockEnabled());
+    ASSERT_FALSE(core_options.RestCommitAcquireLock());
     ExpireConfig expire_config = core_options.GetExpireConfig();
     ASSERT_EQ(10, expire_config.GetSnapshotRetainMin());
     ASSERT_EQ(std::numeric_limits<int32_t>::max(), expire_config.GetSnapshotRetainMax());
@@ -244,6 +246,8 @@ TEST(CoreOptionsTest, TestFromMap) {
         {Options::COMMIT_MIN_RETRY_WAIT, "5ms"},
         {Options::COMMIT_MAX_RETRY_WAIT, "3s"},
         {Options::COMMIT_DISCARD_DUPLICATE_FILES, "true"},
+        {Options::REST_COMMIT_LOCK_ENABLED, "true"},
+        {Options::REST_COMMIT_ACQUIRE_LOCK, "true"},
         {Options::DYNAMIC_PARTITION_OVERWRITE, "false"},
         {Options::OVERWRITE_UPGRADE, "false"},
         {Options::SCAN_SNAPSHOT_ID, "5"},
@@ -398,6 +402,8 @@ TEST(CoreOptionsTest, TestFromMap) {
     ASSERT_EQ(5, core_options.GetCommitMinRetryWait());
     ASSERT_EQ(3 * 1000, core_options.GetCommitMaxRetryWait());
     ASSERT_TRUE(core_options.CommitDiscardDuplicateFiles());
+    ASSERT_TRUE(core_options.RestCommitLockEnabled());
+    ASSERT_TRUE(core_options.RestCommitAcquireLock());
     ASSERT_EQ(5, core_options.GetScanSnapshotId().value_or(-1));
     ASSERT_EQ(7, core_options.GetScanManifestEntryCacheMaxSnapshots());
     ASSERT_FALSE(core_options.ScanManifestEntryLazyDecodeEnabled());
