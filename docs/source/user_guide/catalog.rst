@@ -197,6 +197,58 @@ can tell a commit that raced another. A commit which lost such a race is
 rebased on the new latest snapshot and retried, bounded by ``commit.max-retries``
 and ``commit.timeout`` as a file-system commit is.
 
+A REST catalog can also give a writer a commit lease, so concurrent writers take
+turns instead of racing. The table property ``rest.commit.lock-enabled = true``
+turns on lease enforcement on the server, and a writer that sets
+``rest.commit.acquire-lock = true``, usually as a commit context option, acquires
+a lease for each publication attempt. Both default to ``false``; enabling the
+table property alone does not make writers acquire, and asking to acquire without
+it fails when the commit is created. A writer with an active lease keeps the
+others out, including writers that do not acquire one. The lease is bound to the
+table or branch, to the table UUID, which has to be passed to ``WithTableId``,
+and to the exact commit user, so give each logical writer its own commit user and
+keep it across recovery.
+
+.. code-block:: cpp
+
+   PAIMON_ASSIGN_OR_RAISE(std::shared_ptr<paimon::Table> table,
+                          shared_catalog->GetTable(paimon::Identifier("db", "tbl")));
+   std::optional<std::string> table_uuid = table->CatalogUuid();
+   if (!table_uuid) {
+       return paimon::Status::Invalid("a commit lease needs the table UUID");
+   }
+   paimon::CommitContextBuilder builder(table_path, "writer-1");
+   builder.WithCatalog(shared_catalog, paimon::Identifier("db", "tbl"))
+       .WithTableId(table_uuid.value())
+       .AddOption(paimon::Options::REST_COMMIT_ACQUIRE_LOCK, "true");
+
+Each attempt acquires its own lease before reading the latest snapshot, waits
+while another writer holds it until ``commit.timeout`` without using up
+``commit.max-retries``, renews it in the background and checks it is still
+valid right before publishing. An attempt that fails to acquire the lease, or
+loses it before publishing, publishes nothing and is retried within
+``commit.max-retries`` and ``commit.timeout``, as after a conflict; an attempt
+that lost its lease also removes the manifests it wrote. When the retries run
+out, the error names the lease failure rather than a conflict.
+``RollbackToAsLatest`` holds a lease the same way but is not retried: failing to
+acquire or losing the lease fails it.
+
+``commit.timeout`` is not a strict deadline for waiting on the lease. Each
+acquisition may wait the full timeout, however much of it earlier attempts of
+the same commit used. The timeout is also checked only after each acquisition
+request returns, without interrupting a request in flight, so the wait can run
+past it by the duration of one request, which only the HTTP client's own
+timeouts bound.
+
+There is no unlock request. The server ends a lease when a snapshot is published
+under it. Ending an attempt that published nothing only stops renewing the
+lease, without waiting for a renewal in flight, and the lease stays held until
+it expires.
+
+Leases need ``WithCatalog``: a commit that only builds the commit table request
+for the caller to send cannot hold one, so asking to acquire is rejected there.
+The snapshot UUID checks above still apply.
+
 The HTTP client neither retries nor follows redirects for a commit request.
 Transport errors and non-success responses, including 429, 503 and redirects,
 leave the outcome uncertain: the server may already have accepted the snapshot.

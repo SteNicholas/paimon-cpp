@@ -474,6 +474,8 @@ struct CoreOptions::Impl {
     bool global_index_enabled = true;
     bool commit_force_compact = false;
     bool commit_discard_duplicate_files = false;
+    bool rest_commit_lock_enabled = false;
+    bool rest_commit_acquire_lock = false;
     bool dynamic_partition_overwrite = true;
     bool overwrite_upgrade = true;
     bool compaction_force_rewrite_all_files = false;
@@ -704,6 +706,12 @@ struct CoreOptions::Impl {
         // Parse commit.discard-duplicate-files - whether to discard duplicate files on append
         PAIMON_RETURN_NOT_OK(parser.Parse<bool>(Options::COMMIT_DISCARD_DUPLICATE_FILES,
                                                 &commit_discard_duplicate_files));
+        // Parse rest.commit.lock-enabled - server-side commit lease capability of the table
+        PAIMON_RETURN_NOT_OK(
+            parser.Parse<bool>(Options::REST_COMMIT_LOCK_ENABLED, &rest_commit_lock_enabled));
+        // Parse rest.commit.acquire-lock - whether this writer acquires a commit lease
+        PAIMON_RETURN_NOT_OK(
+            parser.Parse<bool>(Options::REST_COMMIT_ACQUIRE_LOCK, &rest_commit_acquire_lock));
         // Parse dynamic-partition-overwrite - whether overwrite only dynamic partitions
         // for partitioned table overwrite.
         PAIMON_RETURN_NOT_OK(
@@ -1341,6 +1349,14 @@ int64_t CoreOptions::GetCommitMaxRetryWait() const {
 
 bool CoreOptions::CommitDiscardDuplicateFiles() const {
     return impl_->commit_discard_duplicate_files;
+}
+
+bool CoreOptions::RestCommitLockEnabled() const {
+    return impl_->rest_commit_lock_enabled;
+}
+
+bool CoreOptions::RestCommitAcquireLock() const {
+    return impl_->rest_commit_acquire_lock;
 }
 
 bool CoreOptions::DynamicPartitionOverwrite() const {

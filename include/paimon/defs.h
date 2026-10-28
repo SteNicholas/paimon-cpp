@@ -314,6 +314,16 @@ struct PAIMON_EXPORT Options {
     /// Default value is "false".
     static const char COMMIT_DISCARD_DUPLICATE_FILES[];
 
+    /// "rest.commit.lock-enabled" - Enable the REST catalog's server-side table commit lease
+    /// capability. Writers acquire a lease only when "rest.commit.acquire-lock" is enabled.
+    /// Default value is "false".
+    static const char REST_COMMIT_LOCK_ENABLED[];
+
+    /// "rest.commit.acquire-lock" - Whether this writer acquires a REST commit lease for each
+    /// publication attempt. Can be set dynamically for a writer and requires
+    /// "rest.commit.lock-enabled" on the table. Default value is "false".
+    static const char REST_COMMIT_ACQUIRE_LOCK[];
+
     /// "compaction.max-size-amplification-percent" - The size amplification is defined as the
     /// amount (in percentage) of additional storage needed to store a single byte of data in the
     /// merge tree for changelog mode table. Default value is 200.

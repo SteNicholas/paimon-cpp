@@ -514,6 +514,7 @@ if(PAIMON_ENABLE_REST)
          rest/rest_auth.cpp
          rest/dlf_auth.cpp
          rest/rest_catalog.cpp
+         rest/rest_commit_lock.cpp
          rest/rest_messages.cpp
          rest/rest_token_file_system.cpp
          rest/rest_credential_provider.cpp
@@ -1100,6 +1101,7 @@ if(PAIMON_BUILD_TESTS)
                         rest/resource_paths_test.cpp
                         rest/dlf_auth_test.cpp
                         rest/rest_catalog_test.cpp
+                        rest/rest_commit_lock_test.cpp
                         rest/rest_messages_test.cpp
                         rest/rest_token_file_system_test.cpp
                         rest/rest_credential_provider_test.cpp
