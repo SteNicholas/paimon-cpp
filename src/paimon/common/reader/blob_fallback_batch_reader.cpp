@@ -42,10 +42,8 @@ Result<std::unique_ptr<BlobFallbackBatchReader>> BlobFallbackBatchReader::Create
     std::vector<std::vector<Segment>>&& sequence_groups,
     const std::shared_ptr<arrow::Schema>& read_schema, int32_t read_batch_size,
     const std::shared_ptr<arrow::MemoryPool>& arrow_pool) {
-    if (sequence_groups.size() < 2) {
-        return Status::Invalid(
-            "Blob fallback needs at least two sequence groups; a single group should be read "
-            "sequentially.");
+    if (sequence_groups.empty()) {
+        return Status::Invalid("Blob fallback needs at least one sequence group.");
     }
     if (read_schema == nullptr) {
         return Status::Invalid("Blob fallback read schema cannot be nullptr.");
@@ -339,6 +337,9 @@ Result<BatchReader::ReadBatch> BlobFallbackBatchReader::NextBatch() {
         return Status::Invalid("blob fallback batch reader is closed");
     }
     std::vector<std::vector<Chunk>> group_chunks(groups_.size());
+    // TODO(xinyu.lxy): Older layers are materialized even when newer values cover them, adding
+    // unnecessary reads and potentially exposing stale payload errors. Add Java-like read/skip
+    // support to materialize older values only when fallback is needed.
     // the first (newest) group defines the window; the others must step in lockstep
     PAIMON_ASSIGN_OR_RAISE(int64_t row_count, FillWindow(0, read_batch_size_, &group_chunks[0]));
     for (size_t g = 1; g < groups_.size(); g++) {
