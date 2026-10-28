@@ -437,9 +437,13 @@ TEST(SchemaValidationTest, TestLanceDataTypes) {
         arrow::field("string", arrow::utf8()),
         arrow::field("binary", arrow::binary()),
         arrow::field("date", arrow::date32()),
+        arrow::field("time", arrow::time32(arrow::TimeUnit::MILLI)),
         arrow::field("timestamp", arrow::timestamp(arrow::TimeUnit::MICRO)),
         arrow::field("decimal", arrow::decimal128(38, 2)),
         arrow::field("array", arrow::list(arrow::float32())),
+        arrow::field("nested_time",
+                     arrow::struct_({arrow::field(
+                         "values", arrow::list(arrow::time32(arrow::TimeUnit::MILLI)))})),
         arrow::field("row", arrow::struct_({arrow::field("value", arrow::int32())}),
                      /*nullable=*/false),
         arrow::field("nullable_row", arrow::struct_({arrow::field("value", arrow::int32())})),
@@ -472,13 +476,9 @@ TEST(SchemaValidationTest, TestLanceDataTypes) {
         arrow::field("map", arrow::map(arrow::int32(), arrow::utf8())),
         arrow::field("ltz", arrow::timestamp(arrow::TimeUnit::MICRO, "UTC")),
         VariantTypeUtils::ToArrowField("variant"),
-        arrow::field("time_millis", arrow::time32(arrow::TimeUnit::MILLI)),
-        arrow::field("nested_time",
-                     arrow::struct_({arrow::field(
-                         "values", arrow::list(arrow::time32(arrow::TimeUnit::MILLI)))})),
     };
-    std::vector<std::string> expected_errors = {"type MAP", "LOCAL_ZONED_TIMESTAMP", "type VARIANT",
-                                                "type time32", "type time32"};
+    std::vector<std::string> expected_errors = {"type MAP", "LOCAL_ZONED_TIMESTAMP",
+                                                "type VARIANT"};
     for (size_t i = 0; i < unsupported_fields.size(); ++i) {
         ASSERT_OK_AND_ASSIGN(
             table_schema,

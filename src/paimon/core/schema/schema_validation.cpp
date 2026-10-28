@@ -1001,6 +1001,7 @@ Status SchemaValidation::ValidateLanceDataField(const std::shared_ptr<arrow::Fie
         case arrow::Type::FLOAT:
         case arrow::Type::DOUBLE:
         case arrow::Type::DATE32:
+        case arrow::Type::TIME32:
         case arrow::Type::STRING:
         case arrow::Type::BINARY:
         case arrow::Type::DECIMAL128:

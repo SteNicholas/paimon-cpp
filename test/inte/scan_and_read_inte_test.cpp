@@ -3479,6 +3479,8 @@ TEST_F(ScanAndReadInteTest, TestLanceJavaCompatibility) {
         arrow::field("f_binary", arrow::binary()),
         arrow::field("f_varbinary", arrow::binary()),
         arrow::field("f_date", arrow::date32()),
+        arrow::field("f_time_0", arrow::time32(arrow::TimeUnit::MILLI)),
+        arrow::field("f_time_3", arrow::time32(arrow::TimeUnit::MILLI)),
         arrow::field("f_ts_0", arrow::timestamp(arrow::TimeUnit::SECOND)),
         arrow::field("f_ts_3", arrow::timestamp(arrow::TimeUnit::MILLI)),
         arrow::field("f_ts_6", arrow::timestamp(arrow::TimeUnit::MICRO)),
@@ -3497,10 +3499,10 @@ TEST_F(ScanAndReadInteTest, TestLanceJavaCompatibility) {
     // from null parents; see the README alongside the Java compatibility table.
     auto expected = std::make_shared<arrow::ChunkedArray>(
         arrow::ipc::internal::json::ArrayFromJSON(arrow::struct_(fields), R"([
-[0, 1, true, -5, -1000, 10000000001, 1.25, -2.5, "char0001", "value-1", "bin1", "\u0000\u0001\u0002\u007f", -1, "1970-01-01 00:00:01", "1970-01-01 00:00:01.123", "1970-01-01 00:00:01.123456", "1970-01-01 00:00:01.123456789", "-3", "1.25", "12345678901234567.89", "12345678901234567890.123456789012345678", [1, null, -1], [[1, null], null, []], [1, "required"], [1, "nullable"], [1.0, -1.5, 0.25]],
-[0, 2, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, [null, null], [null, null], null],
-[0, 10, false, -5, -1000, 10000000010, 1.25, -2.5, "char0001", "", "bin1", "\u0000\u0001\u0002\u007f", 20000, "1970-01-01 00:00:01", "1970-01-01 00:00:01.123", "1970-01-01 00:00:01.123456", "1970-01-01 00:00:01.123456789", "-3", "1.25", "12345678901234567.89", "12345678901234567890.123456789012345678", [], [[10, null], null, []], [10, "required"], [10, "nullable"], [10.0, -1.5, 0.25]],
-[0, 11, true, -5, -1000, 10000000011, 1.25, -2.5, "char0001", "value-11", "bin1", "\u0000\u0001\u0002\u007f", 20000, "1970-01-01 00:00:01", "1970-01-01 00:00:01.123", "1970-01-01 00:00:01.123456", "1970-01-01 00:00:01.123456789", "-3", "1.25", "12345678901234567.89", "12345678901234567890.123456789012345678", [11, null, -11], [[11, null], null, []], [11, "required"], [11, "nullable"], [11.0, -1.5, 0.25]]
+[0, 1, true, -5, -1000, 10000000001, 1.25, -2.5, "char0001", "value-1", "bin1", "\u0000\u0001\u0002\u007f", -1, 0, 86399999, "1970-01-01 00:00:01", "1970-01-01 00:00:01.123", "1970-01-01 00:00:01.123456", "1970-01-01 00:00:01.123456789", "-3", "1.25", "12345678901234567.89", "12345678901234567890.123456789012345678", [1, null, -1], [[1, null], null, []], [1, "required"], [1, "nullable"], [1.0, -1.5, 0.25]],
+[0, 2, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, [null, null], [null, null], null],
+[0, 10, false, -5, -1000, 10000000010, 1.25, -2.5, "char0001", "", "bin1", "\u0000\u0001\u0002\u007f", 20000, 45296000, 1123, "1970-01-01 00:00:01", "1970-01-01 00:00:01.123", "1970-01-01 00:00:01.123456", "1970-01-01 00:00:01.123456789", "-3", "1.25", "12345678901234567.89", "12345678901234567890.123456789012345678", [], [[10, null], null, []], [10, "required"], [10, "nullable"], [10.0, -1.5, 0.25]],
+[0, 11, true, -5, -1000, 10000000011, 1.25, -2.5, "char0001", "value-11", "bin1", "\u0000\u0001\u0002\u007f", 20000, 86399000, 45296789, "1970-01-01 00:00:01", "1970-01-01 00:00:01.123", "1970-01-01 00:00:01.123456", "1970-01-01 00:00:01.123456789", "-3", "1.25", "12345678901234567.89", "12345678901234567890.123456789012345678", [11, null, -11], [[11, null], null, []], [11, "required"], [11, "nullable"], [11.0, -1.5, 0.25]]
 ])")
             .ValueOrDie());
     const std::string table_path = GetDataDir() + "/lance/append_java_compat.db/append_java_compat";
@@ -3546,7 +3548,7 @@ TEST_F(ScanAndReadInteTest, TestLanceJavaCompatibility) {
 
     auto projected = std::make_shared<arrow::ChunkedArray>(
         arrow::ipc::internal::json::ArrayFromJSON(
-            arrow::struct_({fields[0], fields[24], fields[1], fields[25]}), R"([
+            arrow::struct_({fields[0], fields[26], fields[1], fields[27]}), R"([
 [0, [1, "nullable"], 1, [1.0, -1.5, 0.25]],
 [0, [null, null], 2, null],
 [0, [10, "nullable"], 10, [10.0, -1.5, 0.25]],
@@ -3570,6 +3572,8 @@ TEST_F(ScanAndReadInteTest, TestLancePythonCompatibility) {
         arrow::field("f_string", arrow::utf8()),
         arrow::field("f_binary", arrow::binary()),
         arrow::field("f_date", arrow::date32()),
+        arrow::field("f_time_0", arrow::time32(arrow::TimeUnit::MILLI)),
+        arrow::field("f_time_3", arrow::time32(arrow::TimeUnit::MILLI)),
         arrow::field("f_ts_0", arrow::timestamp(arrow::TimeUnit::SECOND)),
         arrow::field("f_ts_3", arrow::timestamp(arrow::TimeUnit::MILLI)),
         arrow::field("f_ts_6", arrow::timestamp(arrow::TimeUnit::MICRO)),
@@ -3586,10 +3590,10 @@ TEST_F(ScanAndReadInteTest, TestLancePythonCompatibility) {
     };
     auto expected = std::make_shared<arrow::ChunkedArray>(
         arrow::ipc::internal::json::ArrayFromJSON(arrow::struct_(fields), R"([
-[0, 1, true, -5, -1000, 10000000001, 1.25, -2.5, "value-1", "\u0000\u0001\u0002\u007f", -1, "1970-01-01 00:00:01", "1970-01-01 00:00:01.123", "1970-01-01 00:00:01.123456", "1970-01-01 00:00:01.123456789", "-3", "1.25", "12345678901234567.89", "12345678901234567890.123456789012345678", [1, null, -1], [[1, null], null, []], [1, "row-1"], [1.0, -1.5, 0.25]],
-[0, 2, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, [null, null], null],
-[0, 10, false, -5, -1000, 10000000010, 1.25, -2.5, "", "\u0000\u0001\u0002\u007f", 20000, "1970-01-01 00:00:01", "1970-01-01 00:00:01.123", "1970-01-01 00:00:01.123456", "1970-01-01 00:00:01.123456789", "-3", "1.25", "12345678901234567.89", "12345678901234567890.123456789012345678", [], [[10, null], null, []], [10, "row-10"], [10.0, -1.5, 0.25]],
-[0, 11, true, -5, -1000, 10000000011, 1.25, -2.5, "value-11", "\u0000\u0001\u0002\u007f", 20000, "1970-01-01 00:00:01", "1970-01-01 00:00:01.123", "1970-01-01 00:00:01.123456", "1970-01-01 00:00:01.123456789", "-3", "1.25", "12345678901234567.89", "12345678901234567890.123456789012345678", [11, null, -11], [[11, null], null, []], [11, "row-11"], [11.0, -1.5, 0.25]]
+[0, 1, true, -5, -1000, 10000000001, 1.25, -2.5, "value-1", "\u0000\u0001\u0002\u007f", -1, 0, 86399999, "1970-01-01 00:00:01", "1970-01-01 00:00:01.123", "1970-01-01 00:00:01.123456", "1970-01-01 00:00:01.123456789", "-3", "1.25", "12345678901234567.89", "12345678901234567890.123456789012345678", [1, null, -1], [[1, null], null, []], [1, "row-1"], [1.0, -1.5, 0.25]],
+[0, 2, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, [null, null], null],
+[0, 10, false, -5, -1000, 10000000010, 1.25, -2.5, "", "\u0000\u0001\u0002\u007f", 20000, 45296000, 1123, "1970-01-01 00:00:01", "1970-01-01 00:00:01.123", "1970-01-01 00:00:01.123456", "1970-01-01 00:00:01.123456789", "-3", "1.25", "12345678901234567.89", "12345678901234567890.123456789012345678", [], [[10, null], null, []], [10, "row-10"], [10.0, -1.5, 0.25]],
+[0, 11, true, -5, -1000, 10000000011, 1.25, -2.5, "value-11", "\u0000\u0001\u0002\u007f", 20000, 86399000, 45296789, "1970-01-01 00:00:01", "1970-01-01 00:00:01.123", "1970-01-01 00:00:01.123456", "1970-01-01 00:00:01.123456789", "-3", "1.25", "12345678901234567.89", "12345678901234567890.123456789012345678", [11, null, -11], [[11, null], null, []], [11, "row-11"], [11.0, -1.5, 0.25]]
 ])")
             .ValueOrDie());
     const std::string table_path =
@@ -3623,7 +3627,7 @@ TEST_F(ScanAndReadInteTest, TestLancePythonCompatibility) {
     check(2, /*projection=*/{}, expected);
     auto projected = std::make_shared<arrow::ChunkedArray>(
         arrow::ipc::internal::json::ArrayFromJSON(
-            arrow::struct_({fields[0], fields[21], fields[1], fields[22], fields[19]}), R"([
+            arrow::struct_({fields[0], fields[23], fields[1], fields[24], fields[21]}), R"([
 [0, [1, "row-1"], 1, [1.0, -1.5, 0.25], [1, null, -1]],
 [0, [null, null], 2, null, null],
 [0, [10, "row-10"], 10, [10.0, -1.5, 0.25], []],
