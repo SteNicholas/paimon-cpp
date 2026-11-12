@@ -1,0 +1,39 @@
+test/inte/global_index_test.cpp
+  s_da6a0b08bd3945::t_e3bdb02bf66de0 1374
+  s_da6a0b08bd3945::t_6de61a165bbc42 441,461,466,772-778,781-783,799-817,819-820,827-835,1233-1373,1376,1388,1403-1406,1413,1418
+  s_da6a0b08bd3945::t_2f8898c0bd4c72 435,438-440
+  s_da6a0b08bd3945::t_05c571bbd25635 462-464
+  s_da6a0b08bd3945::t_2c0bc9a59f9df5 1375
+  s_da6a0b08bd3945::t_bd05bcb71476ea 1407-1412
+  s_da6a0b08bd3945::t_f3a5916f59a19b 442-460
+  s_da6a0b08bd3945::t_95d8135243cdac 1377-1387
+  s_da6a0b08bd3945::t_f1c45296804b4e 1414-1416
+  s_da6a0b08bd3945::t_ab60fbd7d9a8e0 1389-1402
+  s_da6a0b08bd3945::t_623981875a96e1 419-434,436-437,465,467,1417,1419,4488-4503,4668-4675
+src/paimon/core/table/source/data_evolution_full_text_read_test.cpp
+  s_da6a0b08bd3945::t_6de61a165bbc42 628-632,640-642,654,657-658
+  s_da6a0b08bd3945::t_e3bdb02bf66de0 625-627,651-653
+  s_da6a0b08bd3945::t_5ec021bd8b5130 46,655-656
+src/paimon/core/global_index/data_evolution_global_index_coverage_test.cpp
+  s_da6a0b08bd3945::t_0c76afc27164ed 1-144
+src/paimon/core/table/source/filtered_row_id_reader.cpp
+  s_da6a0b08bd3945::t_40748145f49370 165-196,198,202,204,207-209,214-215,217-218,221,224-226,228,230-239,242-243,256,258,260,262-263,265-266,268
+src/paimon/core/table/source/raw_full_text_read_impl.cpp
+  s_da6a0b08bd3945::t_206991e5eba787 1-338
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "a948b13a50dc8801ea9cd29abc636a575f230be9",
+  "prompts": {},
+  "sessions": {
+    "s_da6a0b08bd3945": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1cf9e-0dcc-7052-bd51-48979409a14c",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": null
+    }
+  }
+}
