@@ -1,0 +1,240 @@
+docs/source/user_guide/global_index.rst
+  s_ce6c830a35ddae::t_2a33edb90e1f60 301-302,380-386,388-390,468-471
+  s_da6a0b08bd3945::t_c25dfa7669da1e 431,433
+  s_ce6c830a35ddae::t_9ec3274007cf2c 424-429,432,472-473
+  s_da6a0b08bd3945::t_18dcc45be3f2a3 359-379,387,391-395,430
+src/paimon/core/global_index/global_index_live_row_filter.cpp
+  s_da6a0b08bd3945::t_ca2413b4512a25 220-245
+src/paimon/core/table/source/data_evolution_full_text_read.h
+  s_da6a0b08bd3945::t_361f2acd3eb99d 40,103-105
+  s_ce6c830a35ddae::t_403cc54862e39a 97-98
+src/paimon/core/table/source/abstract_table_scan.h
+  s_ce6c830a35ddae::t_c97d6fc8fd6e28 46-54
+test/inte/global_index_test.cpp
+  s_da6a0b08bd3945::t_f1c45296804b4e 1481-1483
+  s_ce6c830a35ddae::t_403cc54862e39a 4785,4825-4826
+  s_da6a0b08bd3945::t_2c0bc9a59f9df5 1441
+  s_da6a0b08bd3945::t_02de147862c81b 1386
+  s_da6a0b08bd3945::t_95d8135243cdac 1443-1446
+  s_da6a0b08bd3945::t_ab60fbd7d9a8e0 1450-1463
+  s_ce6c830a35ddae::t_9b961cfc150242 47,804,811-818
+  s_ce6c830a35ddae::t_8facd1f6387f6d 4823-4824
+  s_da6a0b08bd3945::t_f3a5916f59a19b 444-446,448-462
+  s_ce6c830a35ddae::t_d333ab1a106bce 832
+  s_da6a0b08bd3945::t_8d41b898bd156d 1165-1167,1182-1183,1190-1195
+  s_d83329040f82d4::t_b4035e4d599c00 447,855-857,897,900,1394-1396
+  s_7a6feca3345eb7::t_317379481470e1 1168-1171,1176-1181,1184-1186,1188-1189
+  s_da6a0b08bd3945::t_623981875a96e1 421-436,438-439,480,1484,1494,4563-4576,4579,4744-4749,4752
+  s_d83329040f82d4::t_9888eb5b8691c2 1367-1368,1370-1372,1377-1379
+  s_7cfcf2ebb80758::t_4c042f9c921fb1 1147-1149
+  s_da6a0b08bd3945::t_e3bdb02bf66de0 1440
+  s_da6a0b08bd3945::t_2f8898c0bd4c72 437,440-442
+  s_da6a0b08bd3945::t_05c571bbd25635 464
+  s_da6a0b08bd3945::t_bd05bcb71476ea 1468-1473
+  s_cbdcff28bc37c1::t_8104de817f9d32 32,465-478
+  s_ce6c830a35ddae::t_304e0f8d2c5c87 805-810,820-821
+  s_da6a0b08bd3945::t_6de61a165bbc42 443,463,479,785-791,794-796,839-843,845-854,858-859,865-866,873-875,881-886,1291-1345,1348-1349,1351-1358,1382-1385,1387-1393,1397-1401,1411-1413,1416-1439,1449,1464-1467,1480,1493
+  s_7a6feca3345eb7::t_79b2bc8c87ea2c 1172-1175,1187,1414-1415,1442,1447-1448,4577-4578,4750-4751
+  s_d83329040f82d4::t_c8db492cb3d1fc 1346-1347,1350,1359-1366,1369,1373-1376,1380-1381
+  s_7cfcf2ebb80758::t_0cd02e05fe8410 1474-1479,1485-1492
+  s_da6a0b08bd3945::t_7b571ae2935ce6 844,860-863,876-880
+  s_ce6c830a35ddae::t_de2bdf7ed867a7 819,822-827,833-838,1402-1410
+src/paimon/core/table/source/data_evolution_full_text_read_test.cpp
+  s_ce6c830a35ddae::t_ebfcf4f9ed9dbb 627,658,676-678
+  s_ce6c830a35ddae::t_304e0f8d2c5c87 632-634,679-681
+  s_da6a0b08bd3945::t_e3bdb02bf66de0 625-626,656-657
+  s_ce6c830a35ddae::t_9b961cfc150242 674-675,682,706-707
+  s_da6a0b08bd3945::t_5ec021bd8b5130 46,660-661
+  s_da6a0b08bd3945::t_6de61a165bbc42 628-631,637,645-647,659,662-663
+  s_ce6c830a35ddae::t_2ec9cdb47849be 635-636
+  s_3779032ac9a763::t_c032161b373170 729-734,776-777
+src/paimon/common/defs.cpp
+  s_da6a0b08bd3945::t_35969cc82e35dd 170
+src/paimon/core/global_index/data_evolution_global_index_coverage_test.cpp
+  s_d83329040f82d4::t_9888eb5b8691c2 137-139,141-143
+  s_ce6c830a35ddae::t_304e0f8d2c5c87 131-134
+  s_d83329040f82d4::t_c8db492cb3d1fc 75,77-79,136,140,144
+  s_ce6c830a35ddae::t_2ec9cdb47849be 23,129-130,135
+  s_da6a0b08bd3945::t_0c76afc27164ed 1-22,24-74,76,80-128,145-164
+src/paimon/core/table/source/full_text_search_split.cpp
+  s_da6a0b08bd3945::t_0eb0dc246f08c7 42,79-121,279,360-361,363-384,386-389,392-399,402-404,406-407,411-421,424-425,461-462,464-468,473-475,480-481,494-495,502
+  s_ce6c830a35ddae::t_ebfcf4f9ed9dbb 362,385,390-391,405,408-410,463,469-472
+  s_ce6c830a35ddae::t_304e0f8d2c5c87 476-479
+src/paimon/core/table/source/data_evolution_full_text_scan.cpp
+  s_da6a0b08bd3945::t_836d018be0a7a5 300-302
+  s_da6a0b08bd3945::t_0bb3af38dc96d8 306-307
+  s_da6a0b08bd3945::t_3b9a173ea8725f 290
+  s_da6a0b08bd3945::t_b769a879d49647 404-405
+  s_da6a0b08bd3945::t_ffe643c5b9b360 297-299
+  s_da6a0b08bd3945::t_0d54e10f050b24 377-378
+  s_cbdcff28bc37c1::t_9f6dbf5853ac73 379-380
+  s_da6a0b08bd3945::t_4b108236b69553 303-305
+  s_da6a0b08bd3945::t_02de147862c81b 294-296,384,406
+  s_da6a0b08bd3945::t_27240986db12ca 381-383
+  s_ce6c830a35ddae::t_ebfcf4f9ed9dbb 403
+  s_da6a0b08bd3945::t_35dff6fc92e856 291-293
+  s_da6a0b08bd3945::t_187f8ee77fd6a0 396
+  s_da6a0b08bd3945::t_93f39927e198f3 400-402
+  s_da6a0b08bd3945::t_c6ed814d605145 397-399
+  s_da6a0b08bd3945::t_bc390f6ccbb244 385
+src/paimon/core/table/source/raw_full_text_read_impl.h
+  s_ce6c830a35ddae::t_434e8f1a8c4bab 84-85
+  s_da6a0b08bd3945::t_7be6fd23bf3457 1-39,41-68,70,73-83,89-103
+  s_ce6c830a35ddae::t_304e0f8d2c5c87 86-88
+  s_d83329040f82d4::t_697a1bab07c4d1 69,71-72
+  s_ce6c830a35ddae::t_b9356082e5bd42 40
+include/paimon/table/source/full_text_read.h
+  s_006bae27aa4aa9::t_3c66e8d282c40f 53
+  s_ce6c830a35ddae::t_8facd1f6387f6d 48-52
+  s_ce6c830a35ddae::t_9ec3274007cf2c 59-63,65
+  s_ce6c830a35ddae::t_2a33edb90e1f60 54-56,64
+include/paimon/table/source/full_text_search_builder.h
+  s_da6a0b08bd3945::t_6af770d96212a4 116-117
+include/paimon/table/source/full_text_search_split.h
+  s_da6a0b08bd3945::t_a4a173fca325c6 85-97
+  s_ce6c830a35ddae::t_434e8f1a8c4bab 84
+src/paimon/core/table/source/raw_full_text_read_impl.cpp
+  s_ce6c830a35ddae::t_304e0f8d2c5c87 177
+  s_ce6c830a35ddae::t_14132f9e382805 47,186-187,248,273
+  s_da6a0b08bd3945::t_02de147862c81b 33-34,223,227-231
+  s_da6a0b08bd3945::t_206991e5eba787 1-32,35-46,48-176,178-185,188-222,224-226,232-247,249-272,274-330
+src/paimon/core/core_options_test.cpp
+  s_da6a0b08bd3945::t_35969cc82e35dd 1144-1145
+src/paimon/core/table/source/filtered_row_id_reader.cpp
+  s_ce6c830a35ddae::t_304e0f8d2c5c87 225-227
+  s_ce6c830a35ddae::t_c97d6fc8fd6e28 41,43,47,113-156,204,224,228-233,246-248,250-251,255-257
+  s_ce6c830a35ddae::t_403cc54862e39a 185-191,193
+  s_da6a0b08bd3945::t_40748145f49370 196-203,218-223,237,239-242,253,260-262,264,266-274,277-278,291,293,295,297-298,300-301,303
+  s_006bae27aa4aa9::t_942a859328dc81 157
+  s_ce6c830a35ddae::t_8facd1f6387f6d 205-217
+src/paimon/core/table/source/data_evolution_full_text_read.cpp
+  s_ce6c830a35ddae::t_434e8f1a8c4bab 468
+  s_ce6c830a35ddae::t_8facd1f6387f6d 322-323
+  s_ce6c830a35ddae::t_b9356082e5bd42 404-405,424-426,429-430,435-438,464-465,467,508,511,519-522,525-526
+  s_ce6c830a35ddae::t_304e0f8d2c5c87 261-262,427-428,431-434,509-510,523-524
+  s_ce6c830a35ddae::t_403cc54862e39a 236-237,250-252,254,281-288,318,321,325-328
+  s_ce6c830a35ddae::t_2ec9cdb47849be 99-122
+  s_da6a0b08bd3945::t_6dbbedc2afd647 26-27,42-43,50-51,215,230-231,259-260,263-276,331-339,341,407-420,422-423,439-440,443-444,446,458,469-472,495,505,507,512-513,517-518,528
+  s_da6a0b08bd3945::t_02de147862c81b 292-316,324,329
+  s_cbdcff28bc37c1::t_9f56f914bbca97 239-249,253,255-256
+  s_ce6c830a35ddae::t_10207db1c58d4f 22,466,527
+  s_7a6feca3345eb7::t_e06252dbda4204 506
+  s_ce6c830a35ddae::t_14132f9e382805 206
+src/paimon/core/core_options.h
+  s_da6a0b08bd3945::t_35969cc82e35dd 315-317
+src/paimon/core/table/source/full_text_search_builder.cpp
+  s_da6a0b08bd3945::t_61c9f87a26a370 287
+src/paimon/core/table/source/full_text_search_split_test.cpp
+  s_ce6c830a35ddae::t_ebfcf4f9ed9dbb 448,458,465,467-470,473-478,483-484,498,501,505,512,525,534
+  s_ce6c830a35ddae::t_304e0f8d2c5c87 471-472
+  s_da6a0b08bd3945::t_f2fa1ea0202326 41,259,445-447,449-457,459-464,466,479-482,485-497,499-500,502-504,506-511,513-524,526-533,535-566
+src/paimon/common/utils/range.cpp
+  s_ce6c830a35ddae::t_2ec9cdb47849be 49,130-131,133,136
+include/paimon/table/source/full_text_scan.h
+  s_7a6feca3345eb7::t_e06252dbda4204 83-85
+  s_da6a0b08bd3945::t_51eb4ccf370bc3 82,88-89
+include/paimon/defs.h
+  s_7a6feca3345eb7::t_e06252dbda4204 639-642,644-646,648-649
+  s_da6a0b08bd3945::t_35969cc82e35dd 650
+src/paimon/core/core_options.cpp
+  s_da6a0b08bd3945::t_7d896d3a2891a8 1972-1973
+  s_da6a0b08bd3945::t_35969cc82e35dd 455,944-945,1970-1971
+src/paimon/core/global_index/global_index_live_row_filter.h
+  s_da6a0b08bd3945::t_e154287b9ce876 25,34,67-68,71-76
+  s_cbdcff28bc37c1::t_9f6dbf5853ac73 69-70
+src/paimon/CMakeLists.txt
+  s_da6a0b08bd3945::t_7944519e0a5c8d 284,507,913
+src/paimon/core/global_index/data_evolution_global_index_coverage.cpp
+  s_ce6c830a35ddae::t_b9356082e5bd42 76-80,82-83,86,88
+  s_da6a0b08bd3945::t_ac5053ca95df74 1-47,49-53,59,61-75,87,89-91
+  s_ce6c830a35ddae::t_2ec9cdb47849be 48,54-58,60
+  s_ce6c830a35ddae::t_304e0f8d2c5c87 81,84-85
+src/paimon/core/table/source/raw_full_text_search_split_impl.h
+  s_7a6feca3345eb7::t_e06252dbda4204 41
+  s_ce6c830a35ddae::t_ebfcf4f9ed9dbb 24,39,44,60,62-66,73-74,78-79,85
+  s_da6a0b08bd3945::t_b40dac1c940526 1-23,25-33,35-38,40,42-43,45-59,67-72,75-77,80-84,86-88
+  s_d83329040f82d4::t_697a1bab07c4d1 34
+  s_ce6c830a35ddae::t_d9ec99f2c8b228 61
+src/paimon/core/table/source/filtered_row_id_reader.h
+  s_ce6c830a35ddae::t_c97d6fc8fd6e28 33,39,53,76-79,83-84,93
+  s_da6a0b08bd3945::t_8f7d88614a90e0 23,27,29,80-82,85-92,94-97
+  s_ce6c830a35ddae::t_ac30bb2514ec4f 75
+  s_ce6c830a35ddae::t_403cc54862e39a 74
+src/paimon/core/global_index/data_evolution_global_index_coverage.h
+  s_da6a0b08bd3945::t_ae9fd1518d37b3 1-32,34-35,37-43,46-48,53,57-63
+  s_ce6c830a35ddae::t_b9356082e5bd42 33,49-52
+  s_ce6c830a35ddae::t_434e8f1a8c4bab 44-45,54-56
+  s_d83329040f82d4::t_697a1bab07c4d1 36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "8093b153a727e9b274c7d3362d66f0a385c8e330",
+  "prompts": {},
+  "sessions": {
+    "s_006bae27aa4aa9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1d2db-2492-76b3-944b-ec36198784ad",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Nicholas Jiang <nicholasjiang@apache.org>"
+    },
+    "s_3779032ac9a763": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1d2b7-801b-75e3-8ae5-017e395a6c04",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Nicholas Jiang <nicholasjiang@apache.org>"
+    },
+    "s_7a6feca3345eb7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1d305-db41-73f3-af92-c8d66628220a",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_7cfcf2ebb80758": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1cfce-a8e5-7d63-90c8-a502b9bef41f",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": null
+    },
+    "s_cbdcff28bc37c1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1d2b5-247c-7c01-b1ef-9f643cef163a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": null
+    },
+    "s_ce6c830a35ddae": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1d2c8-a554-7ce2-85c8-56d8867ba29a",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_d83329040f82d4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1cfb1-be4f-7a10-8fe6-eb45a85d7c2e",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": null
+    },
+    "s_da6a0b08bd3945": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1cf9e-0dcc-7052-bd51-48979409a14c",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": null
+    }
+  }
+}
