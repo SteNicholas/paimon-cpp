@@ -1,0 +1,63 @@
+benchmark/parquet_format_benchmark.cpp
+  s_6bf0b646cfee28::t_c4e6374d338730 1648-1649
+  s_6bf0b646cfee28::t_27f7e7591022e0 577-578,603-604,607-608,614,628-633,650,1260,1367-1369,1379-1380,1640
+  s_6bf0b646cfee28::t_5d8a9139d8f0c9 1216-1217,1227-1228,1258-1259,1261
+  s_6bf0b646cfee28::t_6d58858a3c69fa 1371-1372
+  s_6bf0b646cfee28::t_d48acb9e7b0b8e 1370,1373-1378,1641-1647
+src/paimon/format/parquet/file_reader_wrapper.cpp
+  s_6bf0b646cfee28::t_e3d69e186478cf 520-521
+src/paimon/format/parquet/page_filtered_row_group_reader.cpp
+  s_6bf0b646cfee28::t_5d8a9139d8f0c9 23,295
+  s_6bf0b646cfee28::t_6d58858a3c69fa 284-286,303-305,382-385,542-544,575-576
+  s_6bf0b646cfee28::t_d48acb9e7b0b8e 27,298-299,334,338,340,346,349,364-365,368,379,387-388,395,397,422-423,466,518-521,541
+  s_6bf0b646cfee28::t_b4a366fbb8208c 273-283,287-294,296-297,301-302,306-333,335-337,339,341-343,345,347-348,350-363,366-367,370-378,380-381,386,389-394,396,398-421,424-433,435-446,448-465,473-475,491,517,522-523,527-528,530-538,547,558-559,568-570,572,578-580
+  s_6bf0b646cfee28::t_a055b34edee20b 556-557
+  s_6bf0b646cfee28::t_8b3872066515c9 111,369,447,495-496,539-540
+  s_6bf0b646cfee28::t_fac2cc4d274703 300,344,434,549-555
+  s_6bf0b646cfee28::t_0bd229fefd6ef5 40
+src/paimon/format/parquet/page_filtered_row_group_reader_test.cpp
+  s_6bf0b646cfee28::t_a055b34edee20b 2913-2914,2922-2923
+  s_6bf0b646cfee28::t_80b262cdabf8bb 2393-2410
+  s_6bf0b646cfee28::t_8b3872066515c9 2735,2823,2894
+  s_6bf0b646cfee28::t_2ca0b3a3c8f219 2806,2808-2822,2824,2890
+  s_58f2bdb4846980::t_a993eb2d5b02cc 1424,1428,1638,1642,1759,1769,1772-1773,1779-1781,1810,1814,2825-2888
+  s_6bf0b646cfee28::t_29c787b0dfd2a7 2659-2662,2666-2713
+  s_6bf0b646cfee28::t_0fecbd7fc99f79 2744-2745,2747
+  s_6bf0b646cfee28::t_d5a81976e93ed5 2924-2925
+  s_6bf0b646cfee28::t_5d8a9139d8f0c9 2892-2893,2895-2912,2915-2921,2926-2940,2942-2946
+  s_6bf0b646cfee28::t_80a729f2c8f13d 1661-1668,1679-1681,1716-1717,1721-1723,2714-2715,2717-2734,2736-2743,2746,2748-2804
+  s_6bf0b646cfee28::t_3740310406cb13 2891
+src/paimon/format/parquet/page_filtered_row_group_reader.h
+  s_6bf0b646cfee28::t_0bd229fefd6ef5 79-80
+  s_6bf0b646cfee28::t_8b3872066515c9 57,60
+src/paimon/format/parquet/file_reader_wrapper_test.cpp
+  s_6bf0b646cfee28::t_556ee0b29d498c 752-755,767-769
+  s_6bf0b646cfee28::t_052689e3f8391c 738-751,757-766,770-780
+  s_6bf0b646cfee28::t_8b3872066515c9 737
+  s_6bf0b646cfee28::t_80b262cdabf8bb 523-524,539,542,545-547,556,559-561,564-565,569-578
+  s_6bf0b646cfee28::t_0fecbd7fc99f79 543,562-563,566-567
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "7ccb028cc5d3988b9c16357e249999df4725307f",
+  "prompts": {},
+  "sessions": {
+    "s_58f2bdb4846980": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1df61-6b0d-7361-9218-7f06945bd659",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_6bf0b646cfee28": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1de0f-cbc2-7171-aabe-57a2c82969f5",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": null
+    }
+  }
+}
