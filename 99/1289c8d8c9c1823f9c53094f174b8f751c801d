@@ -1,0 +1,37 @@
+src/paimon/format/parquet/page_filtered_row_group_reader_test.cpp
+  s_6bf0b646cfee28::t_a055b34edee20b 2785-2786,2794-2797
+  s_6bf0b646cfee28::t_2ca0b3a3c8f219 2699-2729,2734-2762,2821-2836,2840-2870
+  s_6bf0b646cfee28::t_5d8a9139d8f0c9 2763-2784,2787-2793,2798-2820
+  s_6bf0b646cfee28::t_6d58858a3c69fa 2730-2733,2837-2839
+benchmark/parquet_format_benchmark.cpp
+  s_6bf0b646cfee28::t_27f7e7591022e0 577-578,603-604,607-608,614,628-633,650,1260,1367-1370,1373-1377,1637-1641
+  s_6bf0b646cfee28::t_5d8a9139d8f0c9 1216-1217,1227-1228,1258-1259,1261
+  s_6bf0b646cfee28::t_6d58858a3c69fa 1371-1372
+  s_6bf0b646cfee28::t_c4e6374d338730 1642-1643
+src/paimon/format/parquet/page_filtered_row_group_reader.cpp
+  s_6bf0b646cfee28::t_b4a366fbb8208c 273-283,287-294,296-299,301-302,306-343,345-363,365-378,380-381,386-431,433-465,472-474,490,519,521-523,527-528,530-540,547,558-559,568-570,572,578-580
+  s_6bf0b646cfee28::t_2fc13f4fcc0a92 379
+  s_6bf0b646cfee28::t_a055b34edee20b 556-557
+  s_6bf0b646cfee28::t_5d8a9139d8f0c9 23,295,520
+  s_6bf0b646cfee28::t_0bd229fefd6ef5 39,110-111
+  s_6bf0b646cfee28::t_6d58858a3c69fa 284-286,303-305,364,382-385,541-544,575-576
+  s_6bf0b646cfee28::t_fac2cc4d274703 300,344,432,549-555
+src/paimon/format/parquet/page_filtered_row_group_reader.h
+  s_6bf0b646cfee28::t_0bd229fefd6ef5 81-82
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "991289c8d8c9c1823f9c53094f174b8f751c801d",
+  "prompts": {},
+  "sessions": {
+    "s_6bf0b646cfee28": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1de0f-cbc2-7171-aabe-57a2c82969f5",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Nicholas Jiang <nicholasjiang@apache.org>"
+    }
+  }
+}
