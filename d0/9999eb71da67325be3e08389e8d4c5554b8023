@@ -1,0 +1,115 @@
+benchmark/parquet_format_benchmark.cpp
+  s_6bf0b646cfee28::t_6d58858a3c69fa 1371-1372
+  s_6bf0b646cfee28::t_d48acb9e7b0b8e 1370,1373-1378,1641-1647
+  s_6bf0b646cfee28::t_5d8a9139d8f0c9 1216-1217,1227-1228,1258-1259,1261
+  s_6bf0b646cfee28::t_c4e6374d338730 1648-1649
+  s_6bf0b646cfee28::t_27f7e7591022e0 577-578,603-604,607-608,614,628-633,650,1260,1367-1369,1379-1380,1640
+src/paimon/format/parquet/file_reader_wrapper_test.cpp
+  s_8a5bdeb3a429ef::t_668fa5b67fa108 619,857
+  s_8a5bdeb3a429ef::t_edd1017b6c35e3 606-618,620-626,791-794,838-856,858-876
+  s_6bf0b646cfee28::t_0fecbd7fc99f79 544,563-564,567-568
+  s_6bf0b646cfee28::t_052689e3f8391c 743-756,762-771,775-780,782-785
+  s_6bf0b646cfee28::t_8b3872066515c9 742
+  s_6bf0b646cfee28::t_80b262cdabf8bb 524-525,540,543,546-548,557,560-562,565-566,570-573,575-579
+  s_2abf099275bf58::t_defff778daa273 38,781
+  s_6bf0b646cfee28::t_556ee0b29d498c 757-760,772-774
+  s_8a5bdeb3a429ef::t_8729b14827e718 569
+src/paimon/format/parquet/page_filtered_row_group_reader.cpp
+  s_6bf0b646cfee28::t_a055b34edee20b 556-557
+  s_6bf0b646cfee28::t_b4a366fbb8208c 273-283,287-294,296-297,301-302,306-333,335-337,339,341-343,345,347-348,350-363,366-367,370-378,380-381,386,389-394,396,398-421,424-433,435-446,448-465,473-475,491,517,522-523,527-528,530,532-538,547,558-559,568-570,572,578-580
+  s_6bf0b646cfee28::t_d48acb9e7b0b8e 27,298-299,334,338,340,346,349,364-365,368,379,387-388,395,397,422-423,466,518-521,541
+  s_6bf0b646cfee28::t_8b3872066515c9 111,369,447,495-496,539-540
+  s_6bf0b646cfee28::t_0bd229fefd6ef5 40
+  s_6bf0b646cfee28::t_6d58858a3c69fa 284-286,303-305,382-385,542-544,575-576
+  s_6bf0b646cfee28::t_5d8a9139d8f0c9 23,295
+  s_2dfa7fe6b4b5a1::t_0bbd9489a65dfd 215,246
+  s_6bf0b646cfee28::t_fac2cc4d274703 300,344,434,549-555
+src/paimon/format/parquet/page_filtered_row_group_reader_test.cpp
+  s_58f2bdb4846980::t_a993eb2d5b02cc 1424,1428,1638,1642,1759,1769,1772-1773,1779-1781,1810,1814,2839-2902
+  s_6bf0b646cfee28::t_a055b34edee20b 2928-2929,2937-2938
+  s_2abf099275bf58::t_e052b86398c28d 87-88,94-95,99,1826-1828,1837-1838,1854,1863-1864,1866-1867,1870-1871,1874,1876,1884-1885,1887,1889
+  s_2abf099275bf58::t_defff778daa273 1877,1888,1890-1891,1894
+  s_2dfa7fe6b4b5a1::t_eb727db6b0dc17 2676-2678,2681-2686,2688-2717,2719-2726
+  s_2abf099275bf58::t_1bf79350ea63c2 1835-1836
+  s_6bf0b646cfee28::t_80b262cdabf8bb 2403-2420
+  s_6bf0b646cfee28::t_5d8a9139d8f0c9 2906-2907,2910-2914,2916-2927,2930-2935,2941-2942,2944,2946-2951,2957,2961,2963-2964,2966,2968
+  s_190212ea5c4738::t_243eebab4ed7ee 2674-2675
+  s_6bf0b646cfee28::t_29c787b0dfd2a7 2669-2673,2687,2718,2727
+  s_2dfa7fe6b4b5a1::t_e9d519181ca227 2679-2680
+  s_6bf0b646cfee28::t_2ca0b3a3c8f219 2819-2820,2822-2836,2838,2904
+  s_6bf0b646cfee28::t_d5a81976e93ed5 2940
+  s_6bf0b646cfee28::t_80a729f2c8f13d 1661-1668,1679-1681,1716-1717,1721-1723,2728-2729,2731-2748,2750-2757,2760,2762-2818
+  s_6bf0b646cfee28::t_8b3872066515c9 2749,2837
+  s_f7af31fafe2a51::t_0b7f67367189fe 2908-2909,2915,2936,2939,2943,2945,2952-2956,2958-2960,2965,2967,2969-2974
+  s_6bf0b646cfee28::t_0fecbd7fc99f79 2758-2759,2761
+src/paimon/format/parquet/page_filtered_row_group_reader.h
+  s_6bf0b646cfee28::t_0bd229fefd6ef5 79-80
+  s_6bf0b646cfee28::t_8b3872066515c9 57,60
+  s_2dfa7fe6b4b5a1::t_0bbd9489a65dfd 108
+src/paimon/format/parquet/file_reader_wrapper.cpp
+  s_6bf0b646cfee28::t_e3d69e186478cf 520-521
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "d09999eb71da67325be3e08389e8d4c5554b8023",
+  "prompts": {},
+  "sessions": {
+    "s_190212ea5c4738": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1dfa1-4e16-78d0-8d6b-9307a6904d3d",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_2abf099275bf58": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1dfa9-d9ea-71d3-8cef-4b42d8f9effd",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_2dfa7fe6b4b5a1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1df83-7030-7392-bf4d-e8ef5e25dd52",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_58f2bdb4846980": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1df61-6b0d-7361-9218-7f06945bd659",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_6bf0b646cfee28": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1de0f-cbc2-7171-aabe-57a2c82969f5",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": null
+    },
+    "s_8a5bdeb3a429ef": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1dfd2-ba12-7f50-bbd8-28b181fd3a0d",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_f7af31fafe2a51": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1df97-ed3c-7981-8781-a1df0a8473c1",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    }
+  }
+}
