@@ -1,0 +1,105 @@
+src/paimon/common/reader/concat_batch_reader.cpp
+  s_f1ccbf52333787::t_dd73d052bacdd0 23,27,39-56,59-71,84-95,98,104-109,113-114,116-122,128-132,136-137,144,147-153,159-165,168-179,181-183,185
+  s_f1ccbf52333787::t_ae3e507f263522 38,57-58,72-75,78-83
+  s_f1ccbf52333787::t_52a1df0a50a4a5 76-77
+src/paimon/testing/utils/counting_reader_file_system.h
+  s_f1ccbf52333787::t_39f62e0a04b1d7 1-22,24-33,36-101,110-126
+  s_f1ccbf52333787::t_52a1df0a50a4a5 34-35
+  s_f1ccbf52333787::t_ae3e507f263522 102-109
+  s_f1ccbf52333787::t_8ed544a3dee224 23
+docs/source/user_guide/prefetch.rst
+  s_f1ccbf52333787::t_8ed544a3dee224 74-82,84-94,107-109
+  s_f1ccbf52333787::t_621278d2b9abac 83
+  s_f1ccbf52333787::t_f777362b7dacdd 110
+src/paimon/common/reader/concat_batch_reader.h
+  s_f1ccbf52333787::t_8fbc6ae7e46689 28,36
+  s_f1ccbf52333787::t_dd73d052bacdd0 22,24-26,32,47-51,54-58,61,74-90,94-99
+  s_f1ccbf52333787::t_52a1df0a50a4a5 46,52-53
+docs/source/examples/benchmark.rst
+  s_f1ccbf52333787::t_8ed544a3dee224 214-241
+benchmark/sequential_reader_benchmark.cpp
+  s_f1ccbf52333787::t_2a6531057a92d2 1-20,22-25,27-39,41-47,50-66,69-115,123-124,132,135-139,143-146,148-161,164-187,189-195,197-224
+  s_f1ccbf52333787::t_8ed544a3dee224 40,133-134
+  s_f1ccbf52333787::t_174e7bf6c00074 120-122
+  s_f1ccbf52333787::t_e2cf376aa7a52d 48-49,188,196,225-233
+  s_f1ccbf52333787::t_829be25beb9685 21,26
+  s_f1ccbf52333787::t_ae3e507f263522 67-68,125-131,140-142,147,162-163
+  s_f1ccbf52333787::t_fa963c947503ab 116-119
+benchmark/CMakeLists.txt
+  s_f1ccbf52333787::t_06fda50191c380 54-59
+  s_f1ccbf52333787::t_2a6531057a92d2 47-48,51-53,60-65
+  s_f1ccbf52333787::t_ae3e507f263522 49-50
+src/paimon/core/operation/raw_file_split_read_test.cpp
+  s_f1ccbf52333787::t_0e190f6abcd795 28
+  s_f1ccbf52333787::t_39f62e0a04b1d7 21-23,25,39-40,75,131,134-136,141-150,155-156,158-159,162-169,171-174
+  s_f1ccbf52333787::t_fa963c947503ab 151-154,157
+  s_f1ccbf52333787::t_52a1df0a50a4a5 170
+  s_b548bdff9d9dee::t_30259f2fb70423 137-140,422-423,425-426,454-457,459-461,479-483
+  s_f1ccbf52333787::t_ae3e507f263522 132-133,160-161,387,395-396,399-400,442-443,446,515
+  s_af9956b69a8129::t_e7b63eb53dcf0f 491-499,504-507
+  s_f1ccbf52333787::t_096addaedc9cf5 369-386,388-394,397-398,401-421,424,428-435,438-441,444-445,447-453,458,462-478,484-490,500-503,508-514,516-531
+  s_f1ccbf52333787::t_9383d137bbc7c8 427
+  s_f1ccbf52333787::t_ba61dfc53bb1eb 436-437
+src/paimon/core/operation/raw_file_split_read.h
+  s_f1ccbf52333787::t_dd73d052bacdd0 70,99-100
+  s_f1ccbf52333787::t_52a1df0a50a4a5 71-72
+src/paimon/common/reader/concat_batch_reader_test.cpp
+  s_037feeb2a7f7c8::t_42788713ca5e37 245-247,254-255,264-265
+  s_037feeb2a7f7c8::t_21d28c8830e6c6 526,528-544,546-547,553,558-559
+  s_f1ccbf52333787::t_829be25beb9685 26
+  s_037feeb2a7f7c8::t_371299a1cf4700 229-232,238,240-244,248-253,256-263,266-271,582-584
+  s_b548bdff9d9dee::t_30259f2fb70423 37,412-415,421,452-467
+  s_f1ccbf52333787::t_9dc9f664a8a875 591-593
+  s_f1ccbf52333787::t_37ba815aeb8733 749
+  s_f1ccbf52333787::t_8fbc6ae7e46689 23-24,27,35,41,109-118,121-136,150-151,155-158,161-169,504-506,509,511-521,525,527,545,548-550,552,554-557,560-581,585-590,594-598,639-641,643-645,649-653,657-658,662-671,675,679-686,727,739-740,748
+  s_b548bdff9d9dee::t_94ff6474cfea80 424-425
+  s_af9956b69a8129::t_e7b63eb53dcf0f 119,141-149,159,507-508,510,524,551,646-648,654-656,659-661,674,676-678
+  s_f1ccbf52333787::t_e2cf376aa7a52d 137-140,152-154,160
+  s_af9956b69a8129::t_f2559acf113931 120,522-523,672-673
+  s_f1ccbf52333787::t_1bbc1fcc119d6d 411,416-420,422-423,426-451,468,609-610,628-629,688-726,728-738,741-746
+  s_f1ccbf52333787::t_2d8da053b2fe3e 409-410,469,599-608,611-627,630-638,642,687,747
+src/paimon/core/operation/raw_file_split_read.cpp
+  s_f1ccbf52333787::t_ae3e507f263522 183-184
+  s_f1ccbf52333787::t_dd73d052bacdd0 155-181
+  s_f1ccbf52333787::t_8fbc6ae7e46689 29,62-64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "3a267d6438526a396e07c77073ae62a1a3f68bc7",
+  "prompts": {},
+  "sessions": {
+    "s_037feeb2a7f7c8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1e29d-c29e-7681-8462-58a5c4862eb4",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_af9956b69a8129": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1e276-a111-70f0-9379-f09e832776ba",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_b548bdff9d9dee": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1e285-07ee-7463-9e39-4e4fbb03e749",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_f1ccbf52333787": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1e234-1fe2-7753-b153-f0bb444e8aff",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    }
+  }
+}
