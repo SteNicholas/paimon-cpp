@@ -1,0 +1,63 @@
+src/paimon/format/parquet/CMakeLists.txt
+  s_b3bc6e9cbbdbcb::t_493604c7b72c6d 69
+docs/source/user_guide/read.rst
+  s_e68c263f809f07::t_95098185a2bcd4 69
+  s_e68c263f809f07::t_c06da632353d00 70-74
+  s_e68c263f809f07::t_9d322ed92eba08 44-66,75-98
+  s_e68c263f809f07::t_29c0e4aec47191 67-68
+benchmark/parquet_format_benchmark.cpp
+  s_e68c263f809f07::t_566ed8468456bb 1311
+  s_e68c263f809f07::t_a4b71772300964 49,1312-1317,1322,1324,1326-1327,1330-1331,1336-1339,1342-1344,1350,1354,1357-1358,1632-1643
+  s_e68c263f809f07::t_29c0e4aec47191 1318-1321,1323,1325,1328,1335,1352
+  s_e68c263f809f07::t_7905d8050a9612 1332-1334,1340-1341,1351,1353,1355-1356
+  s_e68c263f809f07::t_066f8facf5b51f 1347-1349
+  s_e68c263f809f07::t_05c7c31ffa2747 1329,1345-1346
+src/paimon/format/parquet/parquet_format_defs.h
+  s_e68c263f809f07::t_9d322ed92eba08 62-65
+include/paimon/write_context.h
+  s_e68c263f809f07::t_566ed8468456bb 306-307
+  s_e68c263f809f07::t_9d322ed92eba08 305
+src/paimon/format/parquet/parquet_file_batch_reader_test.cpp
+  s_e68c263f809f07::t_f249415561ba00 1191-1192
+  s_e68c263f809f07::t_1ec33ab5df7801 1188-1190,1193-1209
+  s_e68c263f809f07::t_059af5b5d74629 46,52,56,65,85,1274-1278,1299,1314
+  s_e68c263f809f07::t_b90f55cfd0c032 66
+  s_e68c263f809f07::t_5bd2c0865e4f12 1300
+  s_e68c263f809f07::t_7905d8050a9612 1238-1239,1264-1265
+  s_e68c263f809f07::t_106175f5f44ace 1273
+  s_e68c263f809f07::t_b113792869f488 1146-1170,1172,1185-1187,1210-1224,1226-1237,1243-1263,1266-1269,1271-1272
+  s_e68c263f809f07::t_fc0f13673c1bb9 1171,1173-1175,1178-1184,1240-1242,1279-1292,1295-1298,1309-1313,1353
+  s_e68c263f809f07::t_03d6b035717df3 1176-1177,1293-1294,1301-1308
+src/paimon/format/parquet/parquet_file_batch_reader.cpp
+  s_e68c263f809f07::t_566ed8468456bb 837-838
+  s_e68c263f809f07::t_9d322ed92eba08 839
+  s_e68c263f809f07::t_7905d8050a9612 828-829
+  s_e68c263f809f07::t_29c0e4aec47191 825,830
+docs/source/examples/benchmark.rst
+  s_e68c263f809f07::t_95098185a2bcd4 165-167
+  s_e68c263f809f07::t_29c0e4aec47191 111-112,160-161,163-164,215-243
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "f09030a3a81c9cb104cb291454ba914f691dd6c0",
+  "prompts": {},
+  "sessions": {
+    "s_b3bc6e9cbbdbcb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1e5a8-b325-72f0-b02e-253bee138648",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_e68c263f809f07": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1e557-7df4-7842-9690-0dd7017018df",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    }
+  }
+}
