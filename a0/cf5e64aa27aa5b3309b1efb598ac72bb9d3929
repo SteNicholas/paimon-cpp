@@ -1,0 +1,31 @@
+src/paimon/core/core_options_test.cpp
+  s_27cc258e664632::t_3e6d01e7612001 603
+  s_27cc258e664632::t_9b9a6cf9722062 602
+  s_27cc258e664632::t_36c0323d6b1ee1 604-606
+src/paimon/common/reader/concat_batch_reader_test.cpp
+  s_27cc258e664632::t_aed154463aef61 555-556,571
+  s_27cc258e664632::t_afa0fc7e681c25 29,411-414,417,427-430,445-449,460-465,472-473,475-480,524,526-537,539-554,557-570,572-612,618-656
+  s_27cc258e664632::t_3a0868cf69d4db 675,685,695,697,756,770,782,797,815,820,830,859
+src/paimon/core/operation/raw_file_split_read_test.cpp
+  s_27cc258e664632::t_882ce308d2fb79 376-410,412-425,427
+  s_27cc258e664632::t_032b7f552f581a 147,428,515-517,520-526,531-532,538-554,556-567
+  s_27cc258e664632::t_3e6d01e7612001 555
+  s_27cc258e664632::t_aed154463aef61 411,518-519,527-530,533-537
+  s_27cc258e664632::t_71cc6815efd9e2 21,134-135,144-146,426,429-430,508
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "a0cf5e64aa27aa5b3309b1efb598ac72bb9d3929",
+  "prompts": {},
+  "sessions": {
+    "s_27cc258e664632": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1ea2d-da4a-7461-ac3b-cf2a88278914",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Nicholas Jiang <nicholasjiang@apache.org>"
+    }
+  }
+}
