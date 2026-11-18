@@ -1,0 +1,302 @@
+include/paimon/table/source/table_read.h
+  s_df81e1072ddbf0::t_9b964467db8a79 53-54,56
+  s_df81e1072ddbf0::t_6b579ee4a590d9 51-52
+src/paimon/core/core_options.h
+  s_a3a2a9c029bf08::t_d4ad7a6852ba89 129
+src/paimon/core/table/source/key_value_table_read.h
+  s_e7bf4c6619fd03::t_e73010a53c0717 44,46,64,78
+  s_adc59af3d8bc6f::t_33f1c8b8d70e8f 40,68-72,79
+src/paimon/core/table/source/table_read_utils.cpp
+  s_df81e1072ddbf0::t_573506d4780114 22,24,33,42-44,47-50,73-74,83,85-86,88-91,93,96,99
+  s_adc59af3d8bc6f::t_591bb6daa494e8 1-21,25-28,30-32,34-37,39-41,45-46,51,54-56,58,60-66,69-72,75-82,84,87,92,94-95,97-98,100-107
+  s_e7bf4c6619fd03::t_24a15caabc1364 29,38,52-53,57,67-68
+  s_adc59af3d8bc6f::t_09f292c025170f 23
+  s_adc59af3d8bc6f::t_685b27595572a1 59
+test/inte/realtime_write_inte_test.cpp
+  s_adc59af3d8bc6f::t_67a14a8e008f62 208-209,212-213,225-227,243,4229,4232-4233,6413,6448-6477,6479,6481-6484,6487-6488,6491-6499,6501-6516,6585-6586
+  s_df81e1072ddbf0::t_999fe48a115f62 922,930-935,937,6489-6490,6517,6519,6522-6527,6532,6535-6536,6551-6552,6584
+  s_05aadf74121c1c::t_8eb86cf98b83ff 60,6553-6560,6563-6566,6568-6570
+  s_350e6129f0b3df::t_8365f8f894a390 6425,6430-6435,6439-6444
+  s_df81e1072ddbf0::t_fc4fbe4eec4253 6544-6545
+  s_350e6129f0b3df::t_96b78a321ad1d9 6426-6429
+  s_df81e1072ddbf0::t_d438647c0641bf 6520-6521,6528-6531,6533-6534,6537-6543,6546-6550,6582-6583
+  s_adc59af3d8bc6f::t_9034d75e26cfc2 6389,6419-6424
+  s_75f4efcf521bef::t_d026a2022857a4 6436-6438
+  s_adc59af3d8bc6f::t_685b27595572a1 6478
+  s_05aadf74121c1c::t_da7737f930f440 6561-6562,6567,6571
+  s_e7bf4c6619fd03::t_54845e64ebcc4b 6572-6578
+  s_2d625ba106328b::t_d6b95a9f7bbda4 6587-6588
+  s_4dcbd15ab5b274::t_f4170fb0212758 6365-6366,6376,6380,6382-6383
+  s_e7bf4c6619fd03::t_3129270a15a951 6518,6581
+  s_e7bf4c6619fd03::t_556a70bbdb3525 1027-1028,1030,6384-6385,6480,6485-6486,6500
+  s_e7bf4c6619fd03::t_bd8a21ca609d4f 6579-6580
+  s_0c9f420a8eb3d3::t_66ec94390307e3 6418
+src/paimon/CMakeLists.txt
+  s_adc59af3d8bc6f::t_591bb6daa494e8 506
+src/paimon/core/table/source/append_only_table_read.cpp
+  s_e7bf4c6619fd03::t_24a15caabc1364 172
+  s_df81e1072ddbf0::t_573506d4780114 161-164,166
+  s_adc59af3d8bc6f::t_33f1c8b8d70e8f 55,125-128,153,158-160,165,170,173,177-183
+  s_adc59af3d8bc6f::t_685b27595572a1 174-176
+  s_e7bf4c6619fd03::t_610c5dfa2c5186 217-218
+docs/source/user_guide/prefetch.rst
+  s_2d625ba106328b::t_7e1ff7c601cf0d 107,142-143
+  s_adc59af3d8bc6f::t_9034d75e26cfc2 110-111
+  s_adc59af3d8bc6f::t_4a9ec64fc01417 113,116
+  s_df81e1072ddbf0::t_6b579ee4a590d9 121-122
+  s_e7bf4c6619fd03::t_24bdf14f168c88 78-80
+  s_e7bf4c6619fd03::t_3de9343c6a63be 84-86
+  s_adc59af3d8bc6f::t_5973532c04f87a 81
+  s_e7bf4c6619fd03::t_610c5dfa2c5186 83
+  s_adc59af3d8bc6f::t_032843d265041a 77
+  s_e7bf4c6619fd03::t_1baa3c4d087974 82,91,99-101,112,114,123
+  s_adc59af3d8bc6f::t_09f292c025170f 92-98,108
+  s_adc59af3d8bc6f::t_605b32223f390f 102-106,109
+  s_df81e1072ddbf0::t_fc02b37d8d96ce 117-120
+  s_df81e1072ddbf0::t_66c4b3ff116cb9 115,124-126
+src/paimon/core/table/source/table_read_utils.h
+  s_df81e1072ddbf0::t_573506d4780114 34,41-42,51-52
+  s_05aadf74121c1c::t_ae8aae9a546d45 48-49
+  s_adc59af3d8bc6f::t_591bb6daa494e8 1-33,35-40,43,45,47,50,53-54
+  s_e7bf4c6619fd03::t_24a15caabc1364 46
+  s_adc59af3d8bc6f::t_09f292c025170f 44
+include/paimon/defs.h
+  s_e7bf4c6619fd03::t_e3444048a0d365 250-252
+  s_adc59af3d8bc6f::t_5deb913f82f836 253-254
+src/paimon/core/core_options_test.cpp
+  s_4603503b528db8::t_0437d1803c0f84 96,241,397,1236,1282
+  s_27cc258e664632::t_9c2ebf9681fb8c 610-613
+  s_27cc258e664632::t_3e6d01e7612001 603
+  s_27cc258e664632::t_9b9a6cf9722062 602
+  s_27cc258e664632::t_36c0323d6b1ee1 604-606
+  s_27cc258e664632::t_29302b66e980a7 607-609,614,619
+  s_27cc258e664632::t_ef56762f72b76a 615-618
+  s_27cc258e664632::t_31449bc61fc9ff 620-621
+src/paimon/common/defs.cpp
+  s_a3a2a9c029bf08::t_bdee80ca6b1df1 74
+src/paimon/core/table/source/append_only_table_read.h
+  s_adc59af3d8bc6f::t_33f1c8b8d70e8f 42,62-66,77-78
+  s_4603503b528db8::t_0437d1803c0f84 76
+test/inte/scan_and_read_inte_test.cpp
+  s_adc59af3d8bc6f::t_09f292c025170f 1951-1952,1954
+src/paimon/core/table/format/lazy_concat_batch_reader.h
+  s_e7bf4c6619fd03::t_e3444048a0d365 37-38
+  s_df81e1072ddbf0::t_9b964467db8a79 41-42
+src/paimon/core/operation/raw_file_split_read.cpp
+  s_e7bf4c6619fd03::t_9e6d06491fba2a 183-186
+  s_e7bf4c6619fd03::t_24bdf14f168c88 27
+src/paimon/core/operation/raw_file_split_read_test.cpp
+  s_27cc258e664632::t_a53a31a6ba0dc9 381,518
+  s_27cc258e664632::t_882ce308d2fb79 377-380,382-410,412-425,427
+  s_27cc258e664632::t_71cc6815efd9e2 21,135-136,145-147,426,429-430,508
+  s_27cc258e664632::t_aed154463aef61 411,526-529
+  s_e7bf4c6619fd03::t_24bdf14f168c88 39
+  s_27cc258e664632::t_032b7f552f581a 148,428,515-517,519-525,530-531,536-552,554-565
+  s_a3a2a9c029bf08::t_3d4e5e4cf26f02 532-535
+  s_27cc258e664632::t_3e6d01e7612001 553
+test/inte/nested_column_pruning_inte_test.cpp
+  s_e7bf4c6619fd03::t_2bc8405f98c5f0 448,450,457-458,473
+  s_adc59af3d8bc6f::t_685b27595572a1 1360-1361
+  s_2d625ba106328b::t_d01a3bc1aadccf 1362
+  s_e7bf4c6619fd03::t_c5af9519d0ddd8 420,467-472,474-482
+  s_e7bf4c6619fd03::t_bd8a21ca609d4f 459-461
+src/paimon/common/reader/concat_batch_reader.h
+  s_e7bf4c6619fd03::t_36136e8c58d77d 93
+  s_e7bf4c6619fd03::t_e73010a53c0717 104
+  s_e7bf4c6619fd03::t_9e6d06491fba2a 90-91
+  s_a3a2a9c029bf08::t_c6a4d58753273e 24,50,54-55
+  s_df81e1072ddbf0::t_9b964467db8a79 43
+  s_e7bf4c6619fd03::t_24bdf14f168c88 39,57,59,89,92
+src/paimon/core/table/file_store_table.cpp
+  s_e7bf4c6619fd03::t_e73010a53c0717 595-596
+src/paimon/core/table/format/lazy_concat_batch_reader_test.cpp
+  s_a3a2a9c029bf08::t_6af4ea045077e0 21-22,24,35,37,41,223-233,236-239,241,244,246-262
+  s_adc59af3d8bc6f::t_685b27595572a1 283-284
+  s_350e6129f0b3df::t_8365f8f894a390 32,44,369-372,381,385-391,398-408,410-411,414
+  s_1c70f177109547::t_5dce5b4d1d73f3 276-281
+  s_fe37d7014dee09::t_03cd126e0ddf6a 208,265
+  s_adc59af3d8bc6f::t_243b135c6c49c2 23,77,104,110-113,123-127,131
+  s_adc59af3d8bc6f::t_4a9ec64fc01417 54-55,59,81-88,103,266-270,272-275,282,285-300,302-303
+  s_e7bf4c6619fd03::t_6127629b274ba2 135-144,309,353
+  s_c4f4ced7390e2a::t_2a9047c7e22398 200-205,304,374,376-379,393-394,396,409,413,415-416
+  s_1c70f177109547::t_61152926b6ab5c 271,301,360-364
+  s_4dcbd15ab5b274::t_f4170fb0212758 162-165,167,171,177-178,180-181,187-188,209
+  s_0c9f420a8eb3d3::t_974c45ebfc68c8 373,375,380,382-384,392,397,412
+  s_e7bf4c6619fd03::t_24bdf14f168c88 243
+  s_e7bf4c6619fd03::t_b77f84793dba7d 319-323
+  s_c4f4ced7390e2a::t_6a9dad118be7e5 33,45,150,157,161,168-169,172-174,179,185,189-190,195-199,206-207,210-212,214-220,307-308,310-317,324-341,343-352,354-359,365-366
+  s_a3a2a9c029bf08::t_3d4e5e4cf26f02 234-235,242,318,342,395
+src/paimon/common/reader/concat_batch_reader.cpp
+  s_a3a2a9c029bf08::t_3df50ee2ec4cf6 70-72,85
+  s_e7bf4c6619fd03::t_b77f84793dba7d 120-121
+  s_e7bf4c6619fd03::t_e3444048a0d365 145
+  s_e7bf4c6619fd03::t_6127629b274ba2 24-25,103-107,115-119
+  s_e7bf4c6619fd03::t_24bdf14f168c88 48-58,64,73
+  s_e7bf4c6619fd03::t_9e6d06491fba2a 74-76
+src/paimon/core/table/format/lazy_concat_batch_reader.cpp
+  s_e7bf4c6619fd03::t_6127629b274ba2 33
+  s_a3a2a9c029bf08::t_6af4ea045077e0 51
+  s_df81e1072ddbf0::t_908d1e13f6cd22 53,112,120
+  s_adc59af3d8bc6f::t_591bb6daa494e8 32,65,71-72,79,83-84,97-103,113
+  s_adc59af3d8bc6f::t_243b135c6c49c2 68
+test/inte/read_inte_test.cpp
+  s_1c70f177109547::t_93c26122df9a5c 417
+  s_1c70f177109547::t_514b130f164629 86,382,384,413,418
+src/paimon/core/table/source/table_read_test.cpp
+  s_a3a2a9c029bf08::t_6af4ea045077e0 22,410-412,420-428,430,432,434,436,482,502
+  s_0c9f420a8eb3d3::t_974c45ebfc68c8 515-551,554-567
+  s_a3a2a9c029bf08::t_3d4e5e4cf26f02 400-402,431,552-553
+  s_adc59af3d8bc6f::t_685b27595572a1 448-449
+  s_adc59af3d8bc6f::t_a335c37e3bbdd9 38,62,369-392,398-399,403-409,413-417,435,437-447,450-457,460-472,474-481,483-486,492-501,503-506,511-514
+  s_c4f4ced7390e2a::t_2a9047c7e22398 393-397,418-419,429,433
+  s_df81e1072ddbf0::t_9b7011cbab742d 458-459,473,487-491,507-510
+src/paimon/common/reader/concat_batch_reader_test.cpp
+  s_adc59af3d8bc6f::t_614f18f672d6e0 775-776,779-784,787-790,794-800,802-805,815-816,819-823,829-853,857-870,872-882,885-890
+  s_a3a2a9c029bf08::t_3d4e5e4cf26f02 785-786
+  s_27cc258e664632::t_afa0fc7e681c25 29,415-418,421,431,449-453,464-469,476-477,479-484,537-538,543-544,549,551-564,567-578,582-622,628-642,644-666
+  s_e7bf4c6619fd03::t_5deebfcc379949 812-814
+  s_e7bf4c6619fd03::t_b77f84793dba7d 531,545-547,777-778
+  s_27cc258e664632::t_3a0868cf69d4db 685,695,705,707,769
+  s_e7bf4c6619fd03::t_24bdf14f168c88 41,249-250,643,691,753-755,801
+  s_e7bf4c6619fd03::t_9e6d06491fba2a 251-253,432-434,579-581,854-856
+  s_e7bf4c6619fd03::t_64b3b90cc40a1e 30,528-529,532-533,535-536,539-542,550,740,764-766,774,791-793,806-811,817-818
+  s_27cc258e664632::t_aed154463aef61 565-566
+src/paimon/core/table/source/key_value_table_read.cpp
+  s_adc59af3d8bc6f::t_33f1c8b8d70e8f 48,168,211,270,275,280,283,287-293
+  s_adc59af3d8bc6f::t_685b27595572a1 284-286
+  s_e7bf4c6619fd03::t_24a15caabc1364 282
+  s_e7bf4c6619fd03::t_e73010a53c0717 161,167,171,173,189
+  s_df81e1072ddbf0::t_573506d4780114 271-274,276
+  s_e7bf4c6619fd03::t_e11f555066b7c6 192-194,267-269
+src/paimon/core/core_options.cpp
+  s_e7bf4c6619fd03::t_e73010a53c0717 32,423
+  s_a3a2a9c029bf08::t_9abd4ed2c30e73 537-542,1344-1347
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "66df734f1eb9bade41c21d00f4c9698b9de5f430",
+  "prompts": {},
+  "sessions": {
+    "s_05aadf74121c1c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1f05c-4b06-73b2-b725-d20c5d3a71cb",
+        "model": "gpt-6.2-astra"
+      },
+      "human_author": null
+    },
+    "s_0c9f420a8eb3d3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1ea73-a4ce-7121-8991-234068be5731",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_1c70f177109547": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1eabe-356b-7251-8428-04c2644088c6",
+        "model": "gpt-6.2-astra"
+      },
+      "human_author": null
+    },
+    "s_27cc258e664632": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1ea2d-da4a-7461-ac3b-cf2a88278914",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_2d625ba106328b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1ea53-5d77-71d0-89e4-720e0875b6fe",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Nicholas Jiang <nicholasjiang@apache.org>"
+    },
+    "s_350e6129f0b3df": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1eaa8-8509-75d3-9388-4e4056a5ae01",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_4603503b528db8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1ee8f-a225-7540-ad59-5c4dca9ffe98",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Nicholas Jiang <nicholasjiang@apache.org>"
+    },
+    "s_4dcbd15ab5b274": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1ea7d-83d5-7d01-80d3-44ecf37990dd",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_75f4efcf521bef": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1eaaf-90b2-7be2-a135-1a1d0bbfb6c2",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_a3a2a9c029bf08": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1ea8e-2822-79b0-a57a-d3061c879cdb",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_adc59af3d8bc6f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1ea3c-8c84-7032-badf-01e7e13ff128",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_c4f4ced7390e2a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1ea67-53fe-7132-a145-749bac95ae77",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_df81e1072ddbf0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1f044-d4df-78f0-bdd8-38e20354dacb",
+        "model": "gpt-6.2-astra"
+      },
+      "human_author": null
+    },
+    "s_e7bf4c6619fd03": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1f011-8884-7850-b6bd-4517a338169b",
+        "model": "gpt-6.2-astra"
+      },
+      "human_author": null
+    },
+    "s_fe37d7014dee09": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1ea8d-64bb-7332-92be-348235105f3f",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Nicholas Jiang <nicholasjiang@apache.org>"
+    }
+  }
+}
