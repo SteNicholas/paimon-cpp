@@ -7,6 +7,7 @@ include/paimon/table/source/table_read.h
   s_c4f4ced7390e2a::t_fed174c1172ce7 56-58
 src/paimon/core/table/source/append_only_table_read.h
   s_adc59af3d8bc6f::t_33f1c8b8d70e8f 42,62-66,75,77-78
+  s_4603503b528db8::t_0437d1803c0f84 76
 include/paimon/defs.h
   s_a3a2a9c029bf08::t_3d4e5e4cf26f02 251-252
   s_adc59af3d8bc6f::t_259ddd3eb9b7da 250
@@ -42,6 +43,7 @@ src/paimon/core/core_options_test.cpp
   s_27cc258e664632::t_9c2ebf9681fb8c 610-613
   s_27cc258e664632::t_ef56762f72b76a 615-618
   s_27cc258e664632::t_36c0323d6b1ee1 604-606
+  s_4603503b528db8::t_0437d1803c0f84 96,241,397,1236,1282
 test/inte/realtime_write_inte_test.cpp
   s_adc59af3d8bc6f::t_9034d75e26cfc2 6391,6421-6426
   s_a3a2a9c029bf08::t_3d4e5e4cf26f02 6522-6525
@@ -166,6 +168,14 @@ src/paimon/core/table/source/table_read_utils.cpp
         "model": "gpt-6-astra"
       },
       "human_author": null
+    },
+    "s_4603503b528db8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1ee8f-a225-7540-ad59-5c4dca9ffe98",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Nicholas Jiang <nicholasjiang@apache.org>"
     },
     "s_4dcbd15ab5b274": {
       "agent_id": {
