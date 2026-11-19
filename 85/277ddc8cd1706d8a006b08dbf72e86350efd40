@@ -1,0 +1,305 @@
+cmake_modules/arrow_geospatial.diff
+  s_0557cc0628303d::t_a9388c21113184 355,358,362,364,410,413,417,420,422,437
+  s_0557cc0628303d::t_b2cdc32826bf82 1-25,27-30,32-36,38-51,53-58,60-99,102-237,239-241,243-262,264-316,318-344,346,348-354,356-357,359-361,363,365-409,411-412,414-416,418-419,421,423-436,438-479,481-484,486-499,501,503-504,506-508,510-531,533-665,667-711,713-735,737-833,835-856,858-891,893-951,953-966,968-970,972-982,984-986,988-992,994-996,998-1001,1003-1005,1007-1010,1012-1014,1016-1025,1027-1033,1035-1068,1070-1081,1083-1091,1093-1106,1108,1110-1316,1318-1329,1331-1341,1343-1354,1356-1382,1384
+  s_0557cc0628303d::t_009d66bef32bc7 26,31,37,52,59,100-101,238,242,263,317,345,347,480,485,500,502,505,509,532,666,712,736,834,857,892,952,967,971,983,987,993,997,1002,1006,1011,1015,1026,1034,1069,1082,1092,1107,1109,1317,1330,1342,1355,1383
+src/paimon/format/parquet/predicate_converter_test.cpp
+  s_2d460099ce20ce::t_eda9f9d3c1906c 49
+  s_2393a3df4caaf6::t_cb1a43a65fe526 53-54,199-206
+  s_2d460099ce20ce::t_35c930699ba298 48
+  s_2393a3df4caaf6::t_754236411f98dc 207
+src/paimon/common/reader/blob_view_resolving_batch_reader_test.cpp
+  s_c61830651256f1::t_923a7afbfcf1f8 183-188
+  s_c61830651256f1::t_a367612185c378 39,178-182,210-212,214-215
+src/paimon/core/table/system/system_table_schema.cpp
+  s_0557cc0628303d::t_4a417c4f837c11 58
+src/paimon/format/blob/blob_file_batch_reader.cpp
+  s_0557cc0628303d::t_a9388c21113184 41
+  s_0557cc0628303d::t_bbff6845b9bce2 406
+src/paimon/core/io/field_mapping_reader.cpp
+  s_0557cc0628303d::t_0edbf8bf858a8e 184,190,201,213,218,342,356-357
+src/paimon/format/avro/avro_file_format.cpp
+  s_0557cc0628303d::t_2b27aa94ee24e8 25,54,60-62
+src/paimon/format/parquet/CMakeLists.txt
+  s_0557cc0628303d::t_d70d581bc25e09 68
+LICENSE
+  s_0557cc0628303d::t_1b11cead11312f 356
+src/paimon/core/operation/file_store_scan.cpp
+  s_0557cc0628303d::t_d1692c5af0941c 39,93-96
+src/paimon/common/reader/blob_view_resolving_batch_reader.cpp
+  s_0557cc0628303d::t_107caa1c0d0bcb 87
+test/inte/geospatial/pom.xml
+  s_0557cc0628303d::t_c6566d2f05d182 1-42
+src/paimon/format/parquet/parquet_schema_util.cpp
+  s_0557cc0628303d::t_526cac3774e11a 130-131
+src/paimon/core/utils/nested_projection_utils.cpp
+  s_0557cc0628303d::t_1e038af5e13326 39,183-185,491-492,494-495,523-524
+src/paimon/format/parquet/parquet_stats_extractor.cpp
+  s_0557cc0628303d::t_4c690adeef6d46 25,292-293,301-314,342-348
+src/paimon/format/avro/avro_file_batch_reader.cpp
+  s_0557cc0628303d::t_e235cf9de86744 29,262
+src/paimon/core/io/complete_row_tracking_fields_reader_test.cpp
+  s_c61830651256f1::t_a367612185c378 32-33,65,67,356-364,366-367,372-373
+  s_c61830651256f1::t_5748813766c48a 377-378
+  s_c61830651256f1::t_113b3f48a9b35a 370-371
+  s_c61830651256f1::t_923a7afbfcf1f8 365,368-369,374-376
+src/paimon/core/schema/table_schema_test.cpp
+  s_0557cc0628303d::t_288af42d0a03aa 29,145-147,149-150,152,158-161
+  s_0557cc0628303d::t_a9388c21113184 153-157
+src/paimon/format/parquet/parquet_field_id_converter.cpp
+  s_0557cc0628303d::t_d6c9c5f2e8bbe0 26,28,31,42-45,48-49,83-84,95-96,100-115,127,132,137-140
+src/paimon/common/types/geospatial_type.cpp
+  s_0557cc0628303d::t_9ebac7a6149ba5 1-22,24-44,46-62,64-77,79-163,167-265,268-269,273-278
+  s_0557cc0628303d::t_cbf9ba8bdff26f 23,45,63,78
+  s_0557cc0628303d::t_a9388c21113184 164-166,266-267,270-272
+src/paimon/core/schema/schema_validation_test.cpp
+  s_0557cc0628303d::t_dd492c1de59f49 31,2162-2163,2203-2210
+  s_0557cc0628303d::t_4ed5f51cdd6294 2164-2167,2171-2202
+  s_0557cc0628303d::t_3730867e926e90 2168-2170
+src/paimon/format/mosaic/mosaic_file_batch_reader.cpp
+  s_0557cc0628303d::t_fa21149183f3a8 32,222
+src/paimon/format/parquet/parquet_read_type_adapter.cpp
+  s_0557cc0628303d::t_a9388c21113184 206-208
+  s_0557cc0628303d::t_368efca4043fdc 28,67-69,98-100,133,135,138,140,146,148,151,175-176,199-205,209-210,212-213,225-229,238-240
+src/paimon/common/types/geospatial_type.h
+  s_0557cc0628303d::t_51a45a34ca6f5f 1-45,49-52,55-81
+  s_0557cc0628303d::t_a9388c21113184 46-48,53-54
+src/paimon/common/types/data_type_json_parser.cpp
+  s_0557cc0628303d::t_9b9a479f6812fd 38-39,96,157-158,209-210,266-268,500-502,680-711,818-820,912-918
+src/paimon/format/orc/orc_file_format.h
+  s_0557cc0628303d::t_ab9599adbf96b0 27,53,61
+src/paimon/common/data/shredding/map_shared_shredding_read_plan_factory.cpp
+  s_0557cc0628303d::t_22205a7d5a5ac9 229,269
+src/paimon/common/data/shredding/map_shared_shredding_utils_test.cpp
+  s_0557cc0628303d::t_fa006546de0ecf 27,188-199,204
+src/paimon/core/schema/arrow_schema_validator.cpp
+  s_0557cc0628303d::t_02b1cbc99439af 32,203-205
+src/paimon/common/data/shredding/map_shared_shredding_utils.cpp
+  s_0557cc0628303d::t_e434e6e2e21ce1 86-87,89,93,96,101-102,108-109,112-113,134
+src/paimon/common/types/map_type.h
+  s_0557cc0628303d::t_957e218a4184b9 35-38,40-41,56,60
+  s_0557cc0628303d::t_cbf9ba8bdff26f 39
+src/paimon/core/utils/field_mapping.cpp
+  s_0557cc0628303d::t_669056e6489d78 30,137-140,202-203,214,216,316-324,341-342
+  s_0557cc0628303d::t_a9388c21113184 333-337
+src/paimon/format/lance/lance_file_format.cpp
+  s_0557cc0628303d::t_44b353459a6cb8 23,44,55
+src/paimon/format/parquet/parquet_field_id_converter_test.cpp
+  s_6364682dfeadc0::t_b448077580bebb 191-192
+  s_6364682dfeadc0::t_29dbd752782c0f 29,165-179,183-190
+  s_6364682dfeadc0::t_75ddf6d353ba7f 180-182
+src/paimon/testing/utils/read_result_collector.h
+  s_0557cc0628303d::t_1e1ad71f72674b 102,130,248,252-255
+  s_0557cc0628303d::t_d9c9c21382fb21 256
+cmake_modules/ThirdpartyToolchain.cmake
+  s_0557cc0628303d::t_c65d7026e43552 2025,2032-2033
+src/paimon/core/operation/data_evolution_file_store_scan.cpp
+  s_0557cc0628303d::t_a43b445cde8d26 28,187-188
+src/paimon/format/parquet/parquet_file_batch_reader.cpp
+  s_0557cc0628303d::t_fcefb3225bb346 46,878-879,882-887,898-899,914,924-925,935,937,984-985
+src/paimon/format/parquet/geospatial_parquet_test.cpp
+  s_0557cc0628303d::t_ba7a5cfaed2e7c 23,59-60,64
+  s_0557cc0628303d::t_1e1ad71f72674b 239-240
+  s_7cf79dd857ee13::t_5b0cb4993e5be8 54
+  s_0557cc0628303d::t_a9388c21113184 168-179,351,357,359-360
+  s_0557cc0628303d::t_63214a00eb129f 241-242
+  s_2393a3df4caaf6::t_cb1a43a65fe526 255-256,305-306,312,314-339,346,374-375
+  s_7cf79dd857ee13::t_65b6ab991a51a1 48,257-260,263-266,269-277,280-301
+  s_0557cc0628303d::t_a6ea08adc485c7 1-22,24-47,49-53,55-58,61-63,65-167,180-238,243-254,302-304,307,340-345,347-350,352-356,358,361-373,376-378
+  s_7cf79dd857ee13::t_07a37dfc9d2060 261-262,267-268,278-279
+  s_2393a3df4caaf6::t_320e332b6a1328 308-311,313
+src/paimon/common/table/special_fields.h
+  s_0557cc0628303d::t_41b18d27933f4f 99-107
+src/paimon/common/data/shredding/map_shared_shredding_schema_utils.cpp
+  s_0557cc0628303d::t_f65c47dadeb6fe 102-103
+src/paimon/common/types/data_type.cpp
+  s_0557cc0628303d::t_2d003d78eafcae 30,134-140
+src/paimon/core/schema/arrow_schema_validator_test.cpp
+  s_6364682dfeadc0::t_29dbd752782c0f 33,114-137
+  s_6364682dfeadc0::t_4f038422e9073a 138-139
+src/paimon/core/casting/cast_executor_factory.cpp
+  s_0557cc0628303d::t_a229cdee1537c8 86
+src/paimon/format/parquet/parquet_read_type_adapter_test.cpp
+  s_2d460099ce20ce::t_54aece39eb1214 29,232-239,242-247,254
+  s_0557cc0628303d::t_7f5a108abb0e92 27,176-178,194-205,207-209,211
+  s_2d460099ce20ce::t_8b6fdf80e08786 228-231,240-241,249-251
+  s_0557cc0628303d::t_b47276eea402bb 206,210,212-227,248,252-253,255-257
+src/paimon/format/parquet/predicate_converter.cpp
+  s_0557cc0628303d::t_182f4222815e07 190-194
+docs/source/user_guide/data_types.rst
+  s_0557cc0628303d::t_80759fba741b6b 100-107
+  s_0557cc0628303d::t_fee96aeaaff3f7 487-517,522-534
+  s_0557cc0628303d::t_cbf9ba8bdff26f 518-521
+include/paimon/defs.h
+  s_0557cc0628303d::t_3f25be0cbda04e 58-61
+src/paimon/common/types/data_field.cpp
+  s_0557cc0628303d::t_29690529339519 32,46
+src/paimon/core/schema/table_schema.cpp
+  s_0557cc0628303d::t_0e32ef7c7217d9 42,152-153,223-224
+src/paimon/common/utils/field_type_utils.h
+  s_0557cc0628303d::t_33e43af48768b3 30,57-60,113-116
+src/paimon/format/blob/blob_file_format.h
+  s_0557cc0628303d::t_a6a996dda542f2 26,60,69
+src/paimon/format/parquet/parquet_file_batch_reader.h
+  s_0557cc0628303d::t_3fe855c44dd058 202-204,212
+src/paimon/core/core_options.cpp
+  s_0557cc0628303d::t_2e68e8e2c52be3 1787-1791,1793
+src/paimon/core/realtime/arrow_realtime_store_test.cpp
+  s_572fa3dfd8faaa::t_8e3f78f2ff7778 648-650,652-653,658-659,666-671
+  s_572fa3dfd8faaa::t_1de6b9bd1b3fa6 32,643-647,651,654-657,660-665,672
+  s_572fa3dfd8faaa::t_ee891139dff16b 673-674
+src/paimon/common/predicate/leaf_predicate_impl.h
+  s_0557cc0628303d::t_88cf1ae3adbf99 30,48,53-57,64,70-71,73-80,90-92,94-104
+  s_2393a3df4caaf6::t_937bd12219edb1 68-69,72,89,93
+src/paimon/common/reader/data_evolution_file_reader_test.cpp
+  s_c61830651256f1::t_a367612185c378 31-32,92,94,333-335,337-343
+src/paimon/common/types/geospatial_type_test.cpp
+  s_0557cc0628303d::t_a9388c21113184 93-94,100-101
+  s_0557cc0628303d::t_4426db42eb7a9d 199-206
+  s_6364682dfeadc0::t_29dbd752782c0f 103-105,108-111
+  s_0557cc0628303d::t_423736309d1e8c 1-64,67-76,79-90,92,95-99,102,107,113-147,149-167,169-173,175,212
+  s_0557cc0628303d::t_3730867e926e90 185-187,191-192
+  s_0557cc0628303d::t_4ed5f51cdd6294 65-66,77-78,91,106,112,148,168,174,176-184,188-190,193-198,207-211
+src/paimon/core/utils/field_mapping_test.cpp
+  s_0557cc0628303d::t_a6a8e47b27580c 36,38,783-797,801-822
+  s_0557cc0628303d::t_a17f2856abdd7f 798-800
+src/paimon/core/realtime/arrow_realtime_store.cpp
+  s_0557cc0628303d::t_8615faa77ae223 38,60-61,75-76,917-918,920
+src/paimon/core/table/file_store_table.cpp
+  s_0557cc0628303d::t_2524a500998549 301-302
+src/paimon/format/parquet/column_index_filter_test.cpp
+  s_2d460099ce20ce::t_35c930699ba298 386-387,389,411,413-418
+  s_0557cc0628303d::t_a9388c21113184 392-393
+  s_0557cc0628303d::t_8b8aa7f61ce055 28,382-385,388,390-391,394-410,412,419-421
+src/paimon/common/utils/arrow/arrow_utils_test.cpp
+  s_572fa3dfd8faaa::t_5af642bc302a9c 35,1031-1045,1051-1062
+  s_572fa3dfd8faaa::t_835509ce5f1af2 1046-1050
+src/paimon/common/data/shredding/map_shared_shredding_utils.h
+  s_0557cc0628303d::t_f0bd2910449a29 89,142,145,148,152-153
+  s_0557cc0628303d::t_a9388c21113184 93-94
+src/paimon/common/predicate/predicate_validator.h
+  s_0557cc0628303d::t_c0018634b63fb8 101-115
+src/paimon/core/schema/schema_validation.h
+  s_0557cc0628303d::t_2feefb1573df55 55-63
+src/paimon/core/stats/simple_stats_collector.cpp
+  s_0557cc0628303d::t_a7f4a590b2c281 31,141-142,149,151-152
+src/paimon/core/operation/internal_read_context.cpp
+  s_0557cc0628303d::t_040641395028c8 40,141-142,208-209,215
+src/paimon/core/stats/simple_stats_collector_test.cpp
+  s_0557cc0628303d::t_8ccd89fc5b0d85 32-33,37,127,130,199-200
+  s_2d460099ce20ce::t_35c930699ba298 128-129,131-144,151-171,175-181,184-186,189,192-194,197-198
+  s_2d460099ce20ce::t_02c5ea92b6d910 145-150,172-174,182-183,190-191,195-196
+  s_2393a3df4caaf6::t_23ef464f093c98 187-188
+  s_2393a3df4caaf6::t_d7eed023f73c22 84-86
+  s_2393a3df4caaf6::t_937bd12219edb1 78-83,87-88
+src/paimon/core/io/field_mapping_reader.h
+  s_0557cc0628303d::t_a9388c21113184 117
+src/paimon/format/mosaic/mosaic_file_format.cpp
+  s_0557cc0628303d::t_f82931eafad07c 24,45,56
+test/inte/geospatial/GeospatialInterop.java
+  s_0557cc0628303d::t_57129055f3f2ea 1-168
+test/inte/geospatial/run.sh
+  s_0557cc0628303d::t_edf80fb7262cf1 1-31
+src/paimon/common/reader/data_evolution_file_reader.cpp
+  s_0557cc0628303d::t_31742b1e1d7b4b 104,116-118
+  s_0557cc0628303d::t_a9388c21113184 120-121
+src/paimon/core/schema/schema_validation.cpp
+  s_0557cc0628303d::t_a9388c21113184 238-240,289-290
+  s_0557cc0628303d::t_a054767f1a3cf8 47,237,241-288,291-307,312,402-408,481
+test/inte/write_and_read_inte_test.cpp
+  s_0557cc0628303d::t_eed5ac35132d78 42,380-389,393-395,398-405,408-419,422-427,430-445
+  s_0557cc0628303d::t_a9388c21113184 390-392,396-397,406-407,428-429
+  s_0557cc0628303d::t_1e1ad71f72674b 420-421
+src/paimon/format/vortex/vortex_file_format.cpp
+  s_0557cc0628303d::t_f81768f644bcd7 23,59,70
+src/paimon/format/parquet/column_index_filter.cpp
+  s_0557cc0628303d::t_41e0b9143e8d3e 88-98,113-114
+src/paimon/format/orc/orc_file_batch_reader.cpp
+  s_0557cc0628303d::t_374f405459a2f8 35,182
+src/paimon/CMakeLists.txt
+  s_0557cc0628303d::t_979becb8ac4ffa 175,563,576,752
+src/paimon/common/utils/arrow/arrow_utils.cpp
+  s_0557cc0628303d::t_892def7ba91579 41,678-681
+src/paimon/common/predicate/predicate_validator_test.cpp
+  s_572fa3dfd8faaa::t_5af642bc302a9c 41,50,58-59,61-65
+  s_0557cc0628303d::t_39293f57b81f36 23,36-40,42-49,67-69
+  s_2393a3df4caaf6::t_23ef464f093c98 51,66
+  s_572fa3dfd8faaa::t_835509ce5f1af2 55-57
+  s_572fa3dfd8faaa::t_a12c82bb00eefd 52-54,60
+.codespell_ignore
+  s_0557cc0628303d::t_0d11d851cbb715 14
+src/paimon/core/core_options.h
+  s_0557cc0628303d::t_eeb8a5f67a5fd4 236-237
+src/paimon/format/lance/lance_file_batch_reader.cpp
+  s_0557cc0628303d::t_2ca8e65b18fc16 29,195-198
+src/paimon/core/io/complete_row_tracking_fields_reader.cpp
+  s_0557cc0628303d::t_9a34de3280bac2 130-131,145
+  s_0557cc0628303d::t_a9388c21113184 149-150
+src/paimon/format/parquet/parquet_field_id_converter.h
+  s_0557cc0628303d::t_a42b495de9d02b 22,49,53-54
+src/paimon/format/vortex/vortex_file_batch_reader.cpp
+  s_0557cc0628303d::t_096e0397a25fd5 34,512
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "85277ddc8cd1706d8a006b08dbf72e86350efd40",
+  "prompts": {},
+  "sessions": {
+    "s_0557cc0628303d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1f07f-8c5f-7322-9713-870f7ce484fc",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_2393a3df4caaf6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1f0a8-bdc0-7211-bfb7-b7d0d93e296c",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_2d460099ce20ce": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1f099-4615-7a11-8db2-1f3f6002a819",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_572fa3dfd8faaa": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1f227-a526-7dd2-97f0-f8a2e0647402",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_6364682dfeadc0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1f1e0-6339-7030-9cb7-1729fb50e844",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_7cf79dd857ee13": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1f234-1899-7180-b877-b829c3beb425",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_c61830651256f1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1f1f9-4b7f-73e3-8053-cd25d3e55cea",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    }
+  }
+}
