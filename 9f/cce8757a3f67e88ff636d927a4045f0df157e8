@@ -1,0 +1,151 @@
+src/paimon/common/utils/string_utils_test.cpp
+  s_42264307b7cbdd::t_013d70c29695f5 213,218-219,226,230-233,240
+src/paimon/core/io/key_value_in_memory_record_reader.cpp
+  s_cb096934a68d25::t_64c9592b82621a 136-137,143,145
+examples/CMakeLists.txt
+  s_42264307b7cbdd::t_68690db4adab96 21-22
+docs/source/building.rst
+  s_42264307b7cbdd::t_8f70a675181408 35,326-327
+ci/scripts/test_download_release_asset.sh
+  s_cb096934a68d25::t_4773ddfbb2b324 35-37,61-73
+src/paimon/common/utils/binary_row_partition_computer_test.cpp
+  s_42264307b7cbdd::t_d2528312342e80 269
+src/paimon/format/parquet/page_filtered_row_group_reader_test.cpp
+  s_42264307b7cbdd::t_1eb89d93d39a36 83-86,89,121,123-126,132-141,1021,2009,3033,3107,3125
+src/paimon/common/utils/arrow/arrow_input_stream_adapter.h
+  s_42264307b7cbdd::t_1b9d9f0debe140 45-48
+CMakeLists.txt
+  s_42264307b7cbdd::t_19ec86d30c6401 20-21,46,286,288-289,390
+cmake_modules/arrow.diff
+  s_cb096934a68d25::t_7f039c78e92b03 1127
+  s_42264307b7cbdd::t_d48c5380d2b3d3 19,22,25-55,58-74,77-148,150,163,166,178,185-186,223,249,275,318-319,324,331,336,343-344,346-351,355,370,377-379,381,406,434,487,498,510-511,516-518,520,523,533,536,551,567,570,581,584,624,631,640,653-654,662-665,669,680,684,704-706,708-710,719,729,739-740,747-750,756,758,766,769,787-788,810,822,843,846,850,922-923,946-947,949,959,968,985,1009,1012,1031,1034,1042,1048,1050,1056,1058,1072,1076-1081,1087,1089,1097-1098,1102-1106,1108,1114,1116,1122
+  s_cb096934a68d25::t_6f74cad779d19e 1124-1126,1128-1141
+include/paimon/realtime/realtime_store.h
+  s_42264307b7cbdd::t_5050b004a458fd 30
+scripts/releasing/install_smoke/main.cpp
+  s_42264307b7cbdd::t_9607dda2b3767e 21,23,25-27,31-32,39-55
+test/inte/pk_compaction_inte_test.cpp
+  s_cb096934a68d25::t_30f7cb2c4a2e9a 46,1759,1762-1764
+  s_cb096934a68d25::t_fb8fba60e79a6b 1746-1749
+  s_cb096934a68d25::t_f316bee66556e2 1760-1761
+  s_cb096934a68d25::t_efeb8b085c5362 1786-1788,1814-1816
+  s_cb096934a68d25::t_1f147fb6393e85 1713-1714,1744-1745,1752
+  s_cb096934a68d25::t_7f039c78e92b03 1725-1726,1739-1740,1750-1751
+  s_cb096934a68d25::t_c75a21dc8887b4 1723-1724,1737-1738
+.github/workflows/build_and_test.yaml
+  s_42264307b7cbdd::t_1e8998ab71d682 67
+src/paimon/common/data/binary_string_test.cpp
+  s_42264307b7cbdd::t_b9972d2cd78c60 86-89,199-201,235-236
+ci/scripts/build_paimon.sh
+  s_42264307b7cbdd::t_96b74698366cd6 216
+src/paimon/common/utils/arrow/arrow_input_stream_adapter.cpp
+  s_42264307b7cbdd::t_565eeeec39e415 22,129-133,136,140-154,158,160,162-164,166-171,173-174,176
+src/paimon/format/orc/orc_file_batch_reader_test.cpp
+  s_42264307b7cbdd::t_63bb712cca4534 1327,1331,1347-1353,1362-1366,1368-1370,1384-1385,1393-1425
+docs/code-style.md
+  s_42264307b7cbdd::t_0a5294fdfc3b35 28-30
+src/paimon/format/parquet/parquet_stats_extractor_test.cpp
+  s_42264307b7cbdd::t_d3cdbf6fc7b4fc 147-149,165-167,198-200
+ci/scripts/setup_flatc.sh
+  s_42264307b7cbdd::t_8499de68f639d2 39
+src/paimon/format/parquet/parquet_file_batch_reader_test.cpp
+  s_42264307b7cbdd::t_a9f72c43171f2c 2360-2361,2456-2457
+src/paimon/testing/utils/testharness.h
+  s_42264307b7cbdd::t_9585d731b575c4 56
+README.md
+  s_42264307b7cbdd::t_094421159ea8a4 49-50
+src/paimon/format/parquet/parquet_format_writer_test.cpp
+  s_cb096934a68d25::t_e40725183c308a 525-527
+  s_42264307b7cbdd::t_c1fefe1aed30ac 61,151-152,276-277,400-429,432-443,522-524,528-534,540-541,547-548,553,556,563-566,569-579,581-584,669,742,801,925
+  s_c86f89b4852b54::t_f36b72e3357b24 430-431
+src/paimon/format/parquet/file_reader_wrapper.cpp
+  s_c86f89b4852b54::t_4e76334baf2bf1 123-127,129,133-135,138,144
+  s_c86f89b4852b54::t_5c88e9ca942aa2 132
+src/paimon/core/mergetree/compact/aggregate/field_listagg_agg_test.cpp
+  s_42264307b7cbdd::t_79091b553ee5f8 110-112,119,123,161
+include/paimon/read_context.h
+  s_42264307b7cbdd::t_871b247828bd29 28
+src/paimon/common/predicate/literal_converter_test.cpp
+  s_42264307b7cbdd::t_649b0fc970ec43 192-194,196-197
+include/paimon/schema/schema.h
+  s_42264307b7cbdd::t_b4fab6d7b73e9b 24,28-29
+CONTRIBUTING.md
+  s_42264307b7cbdd::t_c142bcaccb2175 88-89
+src/paimon/core/casting/cast_executor_test.cpp
+  s_cb096934a68d25::t_efeb8b085c5362 1355-1357,1388-1390
+  s_cb096934a68d25::t_fb8fba60e79a6b 1955-1958
+  s_cb096934a68d25::t_36216b24b27bf2 1959
+  s_cb096934a68d25::t_7f039c78e92b03 1354,1387
+third_party/versions.txt
+  s_42264307b7cbdd::t_49f2322fe81757 67-68
+docs/source/build_system.rst
+  s_42264307b7cbdd::t_b79440f6fe99b1 27-30,42-45,53
+src/paimon/format/parquet/parquet_writer_builder.cpp
+  s_c86f89b4852b54::t_6247fd66ba7ac2 100
+  s_c86f89b4852b54::t_cae963420e5a44 99
+  s_42264307b7cbdd::t_d6cd7c4ee11842 21,97-98,122-123
+cmake_modules/ThirdpartyToolchain.cmake
+  s_c86f89b4852b54::t_fa5880cf6ed356 1145
+  s_42264307b7cbdd::t_e25e02a099a896 2076-2077,2086,2114
+src/paimon/format/parquet/column_index_filter_test.cpp
+  s_42264307b7cbdd::t_38cb0484082101 355-370,377-379
+src/paimon/format/parquet/variant_parquet_test.cpp
+  s_cb096934a68d25::t_1f147fb6393e85 603-604
+  s_42264307b7cbdd::t_8d9a6ae0d622a2 552,600-602,721-723
+  s_cb096934a68d25::t_fb8fba60e79a6b 605
+scripts/releasing/install_smoke/CMakeLists.txt
+  s_42264307b7cbdd::t_5614ef25aefcd1 22
+src/paimon/format/orc/orc_file_batch_reader.cpp
+  s_42264307b7cbdd::t_3361ad7c4f6541 131-135,137,155
+benchmark/benchmark_suite.cpp
+  s_42264307b7cbdd::t_acce98f394b486 299-303,305-307,400-403,405
+src/paimon/format/parquet/file_reader_wrapper_test.cpp
+  s_c86f89b4852b54::t_fd7e2bc95ddcb4 476-477
+  s_c86f89b4852b54::t_b97a4346f857e7 37,57,445-449,452-460,462-475
+  s_c86f89b4852b54::t_1985c6e5a3a617 450-451,461
+AGENTS.md
+  s_42264307b7cbdd::t_a2530cf5edddf6 63
+ci/scripts/download_release_asset.sh
+  s_cb096934a68d25::t_fe8ed2ad8c3b94 23,41-49,51-61
+src/paimon/core/realtime/realtime_primary_key_writer.cpp
+  s_cb096934a68d25::t_64c9592b82621a 83-84,87,89
+  s_cb096934a68d25::t_1807c85be76b1c 73,86
+src/paimon/testing/arrow_compat/arrow/ipc/json_simple.h
+  s_42264307b7cbdd::t_2e815d895b2557 1-43
+src/paimon/common/utils/arrow/arrow_stream_adapter_test.cpp
+  s_42264307b7cbdd::t_d5e9f0d87eab15 160-176,185,219,222-223
+src/paimon/format/parquet/predicate_pushdown_test.cpp
+  s_42264307b7cbdd::t_de412bb997dd3f 107-108
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "9fcce8757a3f67e88ff636d927a4045f0df157e8",
+  "prompts": {},
+  "sessions": {
+    "s_42264307b7cbdd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a212c5-ef89-7782-86bf-6b51939aced7",
+        "model": "gpt-6.2-sol"
+      },
+      "human_author": "Nicholas Jiang <nicholasjiang@apache.org>"
+    },
+    "s_c86f89b4852b54": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a21316-8850-7e53-9f75-d31ebb9df05f",
+        "model": "gpt-6.2-sol"
+      },
+      "human_author": null
+    },
+    "s_cb096934a68d25": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a21369-877e-73a3-9b2a-d696c0f45460",
+        "model": "gpt-6.2-sol"
+      },
+      "human_author": null
+    }
+  }
+}
